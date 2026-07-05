@@ -72,7 +72,8 @@
 
 ## پیش‌نیازهای دانشی
 
-- **[فصل ۳: مفاهیم بنیادین](03-fundamentals-class-object-self-constructor.md)** — حالت (State) و رفتار، sازنده.
+- **[فصل ۲: مفاهیم بنیادین](02-fundamentals-class-object-self-constructor.md)** — کلاس، شیء، `self`، سازنده.
+- **[فصل ۳: تفکر شیءگرا](03-oo-thinking.md)** — حالت (State) و رفتار، تقسیمِ مسئولیت.
 - **[فصل ۴: اصول چهارگانه](04-four-pillars.md)** — کپسول‌سازی (محافظت از حالتِ صندلی)، استثنا.
 - **[فصل ۷: Composition و معماری](07-composition-architecture.md)** — معماریِ لایه‌ای، Repository، تست‌پذیری.
 - **[فصل ۸: SOLID](08-solid.md)** — SRP و DIP در لایه‌بندی.
@@ -99,7 +100,7 @@ class SeatType(Enum):
     NORMAL = "normal"
     VIP = "vip"
 
-# استثناها (فصل ۴، ۱۲)
+# exceptions (Ch. 4, 12)
 class BookingError(Exception): pass
 class SeatNotAvailableError(BookingError): pass
 
@@ -110,14 +111,14 @@ class Seat:
         self.row = row
         self.number = number
         self.seat_type = seat_type
-        self._status = SeatStatus.AVAILABLE     # کپسوله‌شده — مستقیم دست نزنید
+        self._status = SeatStatus.AVAILABLE     # encapsulated — don't touch directly
 
     @property
     def label(self):
         return f"{self.row}{self.number}"
 
     @property
-    def status(self):                            # فقط‌خواندنی از بیرون (فصل ۵)
+    def status(self):                            # read-only from outside (Ch. 5)
         return self._status
 
     @property
@@ -126,12 +127,12 @@ class Seat:
 
     def hold(self):
         if self._status != SeatStatus.AVAILABLE:
-            raise SeatNotAvailableError(f"صندلی {self.label} آزاد نیست")
+            raise SeatNotAvailableError(f"seat {self.label} is not free")
         self._status = SeatStatus.HELD
 
     def sell(self):
         if self._status != SeatStatus.HELD:
-            raise BookingError(f"صندلی {self.label} ابتدا باید رزرو شود")
+            raise BookingError(f"seat {self.label} must be reserved first")
         self._status = SeatStatus.SOLD
 
     def release(self):
@@ -156,7 +157,7 @@ class Showtime:
     def get_seat(self, label):
         seat = self.seats.get(label)
         if seat is None:
-            raise BookingError(f"صندلیِ {label} در این سانس وجود ندارد")
+            raise BookingError(f"seat {label} does not exist in this showtime")
         return seat
 
     def available_seats(self):
@@ -237,18 +238,18 @@ import uuid
 
 class BookingService:
     def __init__(self, repository: ReservationRepository):
-        self.repository = repository        # تزریقِ وابستگی
-        self._lock = threading.Lock()        # برای thread-safety (فصل ۱۵)
+        self.repository = repository        # dependency injection
+        self._lock = threading.Lock()        # for thread-safety (Ch. 15)
 
     def reserve(self, showtime, seat_labels):
-        with self._lock:                     # جلوگیری از شرایطِ مسابقه
+        with self._lock:                     # preventing a race condition
             seats = [showtime.get_seat(label) for label in seat_labels]
-            # اول همه را بررسی کن (یا همه، یا هیچ)
+            # check all first (all or nothing)
             for seat in seats:
                 if seat.status != SeatStatus.AVAILABLE:
                     raise SeatNotAvailableError(
-                        f"صندلی {seat.label} قبلاً گرفته شده")
-            # حالا همه را رزرو کن
+                        f"seat {seat.label} is already taken")
+            # now reserve them all
             for seat in seats:
                 seat.hold()
             reservation = Reservation(
@@ -262,17 +263,17 @@ class BookingService:
     def confirm_payment(self, reservation_id):
         reservation = self.repository.get(reservation_id)
         if reservation is None:
-            raise BookingError("رزرو یافت نشد")
+            raise BookingError("reservation not found")
         if reservation.is_expired():
             self._release(reservation)
-            raise BookingError("مهلتِ پرداخت گذشته؛ رزرو منقضی شد")
+            raise BookingError("payment deadline passed; reservation expired")
         for seat in reservation.seats:
             seat.sell()
         reservation.is_paid = True
         return reservation
 
     def expire_pending(self):
-        """رزروهای منقضی را آزاد می‌کند (مثلاً با یک زمان‌بند دوره‌ای صدا زده می‌شود)"""
+        """releases expired reservations (e.g. called by a periodic scheduler)"""
         for reservation in self.repository.all():
             if reservation.is_expired():
                 self._release(reservation)
@@ -289,7 +290,7 @@ class BookingService:
 
 ```python
 class BookingService:
-    # ... متدهای قبلی ...
+    # ... previous methods ...
 
     def sales_report(self, showtime):
         sold = [s for s in showtime.seats.values()
@@ -308,32 +309,32 @@ class BookingService:
 ```python
 from datetime import datetime
 
-# راه‌اندازی
+# setup
 repo = ReservationRepository()
 service = BookingService(repo)
 
-showtime = Showtime("دون ۲", datetime(2026, 7, 5, 20, 0), "سالن ۱")
+showtime = Showtime("Don 2", datetime(2026, 7, 5, 20, 0), "Hall 1")
 showtime.build_hall(rows=["A", "B", "C"], seats_per_row=5, vip_rows=["C"])
-print(f"صندلی‌های آزاد: {len(showtime.available_seats())}")   # 15
+print(f"Free seats: {len(showtime.available_seats())}")   # 15
 
-# رزرو
+# reserve
 res = service.reserve(showtime, ["A1", "A2", "C1"])
-print(f"رزرو {res.reservation_id} ساخته شد. مبلغ: {res.total_price():,}")
-#          (A1+A2 معمولی + C1 وی‌آی‌پی)
+print(f"Reservation {res.reservation_id} created. Amount: {res.total_price():,}")
+#          (A1+A2 regular + C1 VIP)
 
-# تلاشِ دوم برای همان صندلی — باید شکست بخورد
+# second attempt for the same seat — should fail
 try:
     service.reserve(showtime, ["A1"])
 except SeatNotAvailableError as e:
-    print(f"خطا (مطابقِ انتظار): {e}")
+    print(f"Error (as expected): {e}")
 
-# پرداخت
+# payment
 service.confirm_payment(res.reservation_id)
-print("پرداخت تأیید شد")
+print("payment confirmed")
 
-# گزارش
+# report
 report = service.sales_report(showtime)
-print(f"فروخته‌شده: {report['sold_count']}، درآمد: {report['revenue']:,}")
+print(f"Sold: {report['sold_count']}, revenue: {report['revenue']:,}")
 ```
 
 ### گام ۸: تست‌پذیری — نشان‌دادنِ قدرتِ معماری
@@ -346,21 +347,21 @@ from datetime import datetime, timedelta
 def test_expired_reservation_cannot_be_paid():
     repo = ReservationRepository()
     service = BookingService(repo)
-    showtime = Showtime("فیلم", datetime.now(), "سالن")
+    showtime = Showtime("movie", datetime.now(), "hall")
     showtime.build_hall(["A"], 2)
 
     res = service.reserve(showtime, ["A1"])
-    # به‌جای انتظارِ واقعی، created_at را دستکاری می‌کنیم
+    # instead of really waiting, we tamper with created_at
     res.created_at = datetime.now() - timedelta(minutes=11)
 
     try:
         service.confirm_payment(res.reservation_id)
-        assert False, "باید خطا می‌داد"
+        assert False, "should have raised an error"
     except BookingError:
-        pass  # درست: منقضی شده
-    # و صندلی باید دوباره آزاد شده باشد
+        pass  # correct: expired
+    # and the seat should be free again
     assert showtime.get_seat("A1").status == SeatStatus.AVAILABLE
-    print("✓ تستِ انقضا موفق")
+    print("✓ expiry test passed")
 
 test_expired_reservation_cannot_be_paid()
 ```

@@ -30,16 +30,16 @@
 این دقیقاً رفتارِ **Singleton** است: یک نمونه‌ی واحد که در سراسرِ برنامه به اشتراک گذاشته می‌شود.
 
 ```python
-# فایل: config.py
-print("config بارگذاری شد")
+# file: config.py
+print("config loaded")
 settings = {"debug": True}
 
-# فایل: main.py
-import config      # خروجی: config بارگذاری شد
-import config      # هیچ خروجی‌ای — از کش آمد، دوباره اجرا نشد
+# file: main.py
+import config      # Output: config loaded
+import config      # no output — it came from cache, didn't run again
 
 config.settings["debug"] = False
-# هر جای دیگری که config را import کند، همین تغییر را می‌بیند
+# anywhere else that imports config sees this same change
 ```
 
 پس اگر یک حالتِ سراسریِ مشترک می‌خواهید (مثلِ تنظیمات یا یک اتصالِ مشترک)، اغلب لازم نیست کلاسِ Singleton بنویسید؛ فقط از یک ماژول استفاده کنید. این، پایتونی‌ترین شکلِ Singleton است.
@@ -69,9 +69,9 @@ from .models import User, Product, Order
 from .services import OrderService
 from .exceptions import ShopError
 
-# حالا کاربر می‌تواند مستقیم از پکیج import کند:
+# now the user can import directly from the package:
 #   from shop import User, OrderService
-# به‌جای مسیرِ طولانیِ:
+# instead of the long path:
 #   from shop.models import User
 #   from shop.services import OrderService
 ```
@@ -85,16 +85,16 @@ from .exceptions import ShopError
 ```python
 # shop/models.py
 
-__all__ = ["User", "Product", "Order"]     # فقط این‌ها عمومی‌اند
+__all__ = ["User", "Product", "Order"]     # only these are public
 
 class User: ...
 class Product: ...
 class Order: ...
-class _InternalHelper: ...      # با _ شروع می‌شود و در __all__ نیست → خصوصی
+class _InternalHelper: ...      # starts with _ and is not in __all__ → private
 
-# در جای دیگر:
+# elsewhere:
 # from shop.models import *
-# فقط User، Product، Order وارد می‌شوند، نه _InternalHelper
+# only User, Product, Order are imported, not _InternalHelper
 ```
 
 `__all__` یک قرارداد است: «این‌ها API عمومیِ من‌اند؛ بقیه جزئیاتِ داخلی‌اند.» حتی اگر از `import *` استفاده نکنید، تعریفش به خواننده می‌گوید چه چیزی عمومی است.
@@ -106,13 +106,13 @@ class _InternalHelper: ...      # با _ شروع می‌شود و در __all__ 
 دو سبکِ import، و اثرشان بر فضای‌نام:
 
 ```python
-# سبکِ ۱: importِ ماژول
+# style 1: import the module
 import shop.models
-user = shop.models.User()      # با مسیرِ کامل — روشن است User از کجاست
+user = shop.models.User()      # with the full path — it's clear where User comes from
 
-# سبکِ ۲: from ... import
+# style 2: from ... import
 from shop.models import User
-user = User()                  # کوتاه‌تر، اما منشأ کمتر پیداست
+user = User()                  # shorter, but the origin is less visible
 ```
 
 **Tradeoff:** `import shop.models` روشن‌تر است (همیشه می‌دانید `User` از کجا آمده) اما پرگوتر. `from shop.models import User` مختصرتر است اما در فایلی با importهای زیاد، منشأِ نام‌ها گم می‌شود. قاعده‌ی رایج: برای نام‌های پرکاربرد `from import`، و وقتی چند ماژول نامِ مشابه دارند (`shop.models.User` و `auth.models.User`)، `import`ِ ماژول برای رفعِ ابهام.
@@ -124,21 +124,21 @@ user = User()                  # کوتاه‌تر، اما منشأ کمتر پ
 ```python
 # shop/notifications.py
 class EmailNotifier:
-    def send(self, msg): return f"ایمیل: {msg}"
+    def send(self, msg): return f"Email: {msg}"
 
 class SMSNotifier:
-    def send(self, msg): return f"پیامک: {msg}"
+    def send(self, msg): return f"SMS: {msg}"
 
-def create_notifier(kind: str):        # Factory در سطحِ ماژول
+def create_notifier(kind: str):        # Factory at module level
     notifiers = {
         "email": EmailNotifier,
         "sms": SMSNotifier,
     }
     if kind not in notifiers:
-        raise ValueError(f"نوعِ ناشناخته: {kind}")
+        raise ValueError(f"unknown type: {kind}")
     return notifiers[kind]()
 
-# کاربر فقط این را می‌بیند:
+# the user only sees this:
 #   from shop.notifications import create_notifier
 #   notifier = create_notifier("email")
 ```
@@ -153,17 +153,17 @@ def create_notifier(kind: str):        # Factory در سطحِ ماژول
 # shop/database.py
 class _Database:
     def __init__(self):
-        self.connection = "اتصالِ واحد"
+        self.connection = "single connection"
     def query(self, sql):
-        return f"نتیجه: {sql}"
+        return f"Result: {sql}"
 
-# یک نمونه‌ی واحد در سطحِ ماژول ساخته می‌شود:
+# a single instance is created at module level:
 db = _Database()
 
-# هر جای برنامه:
+# anywhere in the program:
 #   from shop.database import db
 #   db.query("SELECT ...")
-# همه به همان یک نمونه دسترسی دارند
+# all access the same single instance
 ```
 
 چون ماژول فقط یک‌بار اجرا می‌شود، `db` یک‌بار ساخته می‌شود و همه‌ی importها همان نمونه را می‌گیرند. کلاسِ `_Database` با `_` خصوصی شده تا کسی مستقیم نمونه‌ی دومی نسازد. این، ساده‌ترین و پایتونی‌ترین Singleton است.

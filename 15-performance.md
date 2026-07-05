@@ -42,11 +42,11 @@ class Point:
 
 p = Point(5)
 
-# جست‌وجوی مکرر attribute در حلقه‌ی داغ
+# repeated attribute lookup in a hot loop
 start = time.perf_counter()
 total = 0
 for _ in range(10_000_000):
-    total += p.x          # هر بار جست‌وجوی attribute
+    total += p.x          # an attribute lookup each time
 print(f"attribute: {time.perf_counter() - start:.3f}s")
 ```
 
@@ -88,13 +88,13 @@ class Report:
 
     @cached_property
     def summary(self):
-        print("محاسبه‌ی سنگین...")       # فقط در اولین دسترسی
-        return sum(self.data)             # و فقط یک‌بار
+        print("Heavy computation...")       # only on the first access
+        return sum(self.data)             # and only once
 
 r = Report(list(range(1000)))
-# تا اینجا summary محاسبه نشده
-print(r.summary)      # محاسبه‌ی سنگین... \n 499500
-print(r.summary)      # 499500 — از کش، بدون محاسبه‌ی دوباره
+# so far summary has not been computed
+print(r.summary)      # Heavy computation... \n 499500
+print(r.summary)      # 499500 — from cache, without recomputing
 ```
 
 `cached_property` (فصل پنجم) هم بارگذاریِ تنبل است و هم کش. مقدار را تا لحظه‌ی نیاز به تعویق می‌اندازد و بعد نگهش می‌دارد.
@@ -114,7 +114,7 @@ class MathService:
         return self.fibonacci(n - 1) + self.fibonacci(n - 2)
 
 m = MathService()
-print(m.fibonacci(30))     # سریع — نتایجِ میانی کش می‌شوند
+print(m.fibonacci(30))     # fast — intermediate results are cached
 ```
 
 بدونِ کش، `fibonacci(30)` بازگشتیِ نمایی و بسیار کند است؛ با کش، هر مقدار فقط یک‌بار محاسبه می‌شود. **Tradeoff:** کش حافظه مصرف می‌کند (`maxsize` را کنترل کنید) و فقط برای توابعِ خالص امن است — اگر خروجی به حالتِ متغیر بستگی داشته باشد، کش نتایجِ غلط می‌دهد.
@@ -155,7 +155,7 @@ def heavy(n):
 if __name__ == "__main__":
     with Pool(4) as pool:
         results = pool.map(heavy, [10**6, 10**6, 10**6, 10**6])
-    # چهار پردازشِ موازیِ واقعی، بدونِ محدودیتِ GIL
+    # four truly parallel processes, without the GIL limitation
 ```
 
 **قاعده:** CPU-bound → multiprocessing؛ I/O-bound → threading (یا asyncio).
@@ -167,20 +167,20 @@ if __name__ == "__main__":
 ```python
 import threading
 
-# غیرِ thread-safe — شرایطِ مسابقه
+# not thread-safe — race condition
 class UnsafeCounter:
     def __init__(self):
         self.count = 0
     def increment(self):
-        self.count += 1        # این عمل اتمیک نیست! دو نخ می‌توانند تداخل کنند
+        self.count += 1        # this operation is not atomic! two threads can interfere
 
-# thread-safe — با قفل
+# thread-safe — with a lock
 class SafeCounter:
     def __init__(self):
         self.count = 0
         self._lock = threading.Lock()
     def increment(self):
-        with self._lock:       # فقط یک نخ در آنِ واحد
+        with self._lock:       # only one thread at a time
             self.count += 1
 ```
 
@@ -206,7 +206,7 @@ def slow_function():
     return total
 
 cProfile.run("slow_function()")
-# خروجی: تعدادِ فراخوانی‌ها و زمانِ صرف‌شده در هر تابع
+# Output: number of calls and time spent in each function
 ```
 
 `cProfile` نشان می‌دهد کدام تابع چقدر وقت می‌گیرد. ابزارهای دیگر: `timeit` (برای زمان‌سنجیِ قطعاتِ کوچک)، `line_profiler` (خط‌به‌خط)، و `memory_profiler` (مصرفِ حافظه).
@@ -214,7 +214,7 @@ cProfile.run("slow_function()")
 ```python
 import timeit
 
-# مقایسه‌ی دو رویکرد به‌شکلِ عینی
+# comparing two approaches concretely
 t1 = timeit.timeit("[i*2 for i in range(100)]", number=10000)
 t2 = timeit.timeit("list(map(lambda i: i*2, range(100)))", number=10000)
 print(f"list comprehension: {t1:.3f}")
@@ -229,7 +229,7 @@ print(f"map: {t2:.3f}")
 
 چند ضدالگوی رایج که هم طراحی و هم عملکرد را خراب می‌کنند:
 
-**God Object (فصل دوم):** کلاسِ همه‌کاره که علاوه بر بدیِ طراحی، بهینه‌سازی و کش‌کردنش هم سخت است، چون همه‌چیز در آن گره خورده.
+**God Object (فصل سوم):** کلاسِ همه‌کاره که علاوه بر بدیِ طراحی، بهینه‌سازی و کش‌کردنش هم سخت است، چون همه‌چیز در آن گره خورده.
 
 **Lava Flow:** کدِ مرده یا قدیمی که کسی جرئتِ حذفش را ندارد، پس در پروژه می‌ماند، حافظه و زمانِ بارگذاری می‌گیرد، و خواندنش را سخت می‌کند.
 

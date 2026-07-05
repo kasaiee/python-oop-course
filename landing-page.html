@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>شیء‌گرایی در پایتون — دوره‌ی جامع و کاربردی</title>
+<meta name="description" content="کامل‌ترین دوره‌ی فارسیِ شیء‌گرایی در پایتون؛ از فلسفه و تفکر شیء‌گرا تا متاکلاس‌ها، Performance و سه پروژه‌ی واقعیِ بازار کار. ساده مثل یک آموزشِ خوب، عمیق مثل یک مرجع.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0a0e1a;
+    --bg-soft:#0f1526;
+    --panel:#141b2e;
+    --ink:#0f172a;
+    --paper:#f7f8fc;
+    --paper-2:#eef1f8;
+    --muted:#5b6577;
+    --muted-light:#9aa6bd;
+    --line:#e6e9f2;
+    --brand:#6366f1;
+    --brand-2:#8b5cf6;
+    --brand-3:#22d3ee;
+    --accent:#ffcb2d;
+    --accent-deep:#f59e0b;
+    --good:#22c55e;
+    --danger:#f43f5e;
+    --radius:20px;
+    --shadow:0 20px 45px -20px rgba(15,23,42,.35);
+    --shadow-soft:0 10px 30px -14px rgba(15,23,42,.25);
+    --maxw:1120px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{
+    font-family:'Vazirmatn',Tahoma,'Segoe UI',system-ui,sans-serif;
+    background:var(--paper);
+    color:var(--ink);
+    line-height:1.9;
+    font-size:17px;
+    overflow-x:hidden;
+    -webkit-font-smoothing:antialiased;
+  }
+  a{color:inherit;text-decoration:none}
+  .wrap{max-width:var(--maxw);margin-inline:auto;padding-inline:22px}
+  .eyebrow{
+    display:inline-flex;align-items:center;gap:8px;
+    font-size:.82rem;font-weight:700;letter-spacing:.3px;
+    padding:7px 15px;border-radius:100px;
+    background:rgba(99,102,241,.12);color:#c7d2fe;
+    border:1px solid rgba(139,92,246,.35);
+  }
+  .section{padding:92px 0}
+  .section-head{max-width:760px;margin:0 auto 54px;text-align:center}
+  .section-head .kicker{
+    color:var(--brand);font-weight:800;font-size:.95rem;letter-spacing:.5px;
+    display:block;margin-bottom:12px;
+  }
+  h2.title{font-size:clamp(1.7rem,3.6vw,2.6rem);font-weight:900;line-height:1.4;letter-spacing:-.3px}
+  .section-head p{margin-top:16px;color:var(--muted);font-size:1.06rem}
+
+  /* ===== HERO ===== */
+  .hero{
+    position:relative;
+    background:
+      radial-gradient(1100px 520px at 80% -10%, rgba(99,102,241,.35), transparent 60%),
+      radial-gradient(900px 480px at 10% 0%, rgba(34,211,238,.16), transparent 55%),
+      linear-gradient(180deg,#0a0e1a 0%, #0c1120 60%, #0a0e1a 100%);
+    color:#eef2ff;
+    padding:118px 0 96px;
+    overflow:hidden;
+  }
+  .hero::before{
+    content:"";position:absolute;inset:0;
+    background-image:
+      linear-gradient(rgba(148,163,184,.06) 1px,transparent 1px),
+      linear-gradient(90deg,rgba(148,163,184,.06) 1px,transparent 1px);
+    background-size:52px 52px;
+    mask-image:radial-gradient(700px 460px at 70% 20%, #000 30%, transparent 75%);
+    pointer-events:none;
+  }
+  .hero .wrap{position:relative;z-index:2;text-align:center}
+  .hero h1{
+    font-size:clamp(2.1rem,5.2vw,3.8rem);
+    font-weight:900;line-height:1.35;letter-spacing:-.5px;
+    margin:26px auto 0;max-width:960px;
+  }
+  .hero h1 .grad{
+    background:linear-gradient(100deg,#a5b4fc 0%, #c4b5fd 35%, #67e8f9 100%);
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+  }
+  .hero .lead{
+    max-width:720px;margin:24px auto 0;
+    font-size:1.16rem;color:#c3ccdf;font-weight:400;line-height:2;
+  }
+  .hero code{
+    font-family:'Vazirmatn',monospace;direction:ltr;display:inline-block;
+    background:rgba(148,163,184,.14);color:#a5b4fc;
+    padding:1px 8px;border-radius:7px;font-size:.9em;font-weight:600;
+  }
+  .cta-row{display:flex;gap:16px;justify-content:center;flex-wrap:wrap;margin-top:38px}
+  .btn{
+    display:inline-flex;align-items:center;gap:10px;
+    font-weight:800;font-size:1.03rem;
+    padding:16px 30px;border-radius:14px;cursor:pointer;
+    transition:transform .18s ease, box-shadow .18s ease, background .18s ease;
+    border:1px solid transparent;
+  }
+  .btn-primary{
+    background:linear-gradient(100deg,var(--accent) 0%, var(--accent-deep) 100%);
+    color:#3b2a05;box-shadow:0 16px 34px -12px rgba(245,158,11,.65);
+  }
+  .btn-primary:hover{transform:translateY(-3px);box-shadow:0 22px 44px -12px rgba(245,158,11,.75)}
+  .btn-ghost{
+    background:rgba(255,255,255,.06);color:#e6ecff;
+    border:1px solid rgba(165,180,252,.4);backdrop-filter:blur(6px);
+  }
+  .btn-ghost:hover{transform:translateY(-3px);background:rgba(255,255,255,.12)}
+
+  .stats{
+    display:grid;grid-template-columns:repeat(4,1fr);gap:14px;
+    max-width:840px;margin:56px auto 0;position:relative;z-index:2;
+  }
+  .stat{
+    background:rgba(255,255,255,.045);
+    border:1px solid rgba(148,163,184,.18);
+    border-radius:16px;padding:20px 14px;text-align:center;
+    backdrop-filter:blur(4px);
+  }
+  .stat .num{font-size:1.75rem;font-weight:900;color:#fff;line-height:1.2}
+  .stat .lbl{font-size:.86rem;color:#9fabc6;margin-top:6px}
+
+  /* ===== PAIN / HOOK ===== */
+  .hook{background:var(--paper)}
+  .hook-grid{display:grid;grid-template-columns:1fr 1fr;gap:22px;align-items:stretch;margin-top:8px}
+  .code-card{
+    border-radius:18px;padding:26px;position:relative;overflow:hidden;
+    border:1px solid var(--line);box-shadow:var(--shadow-soft);
+  }
+  .code-card.bad{background:linear-gradient(180deg,#fff 0%, #fff5f5 100%);border-color:#fbcfd3}
+  .code-card.good{background:linear-gradient(180deg,#fff 0%, #f0fdf6 100%);border-color:#bbf7d0}
+  .code-card .tag{
+    display:inline-flex;align-items:center;gap:7px;font-weight:800;font-size:.85rem;
+    padding:5px 13px;border-radius:100px;margin-bottom:14px;
+  }
+  .code-card.bad .tag{background:#fee2e2;color:#b91c1c}
+  .code-card.good .tag{background:#dcfce7;color:#15803d}
+  .code-card h3{font-size:1.14rem;font-weight:800;margin-bottom:8px}
+  .code-card p{color:var(--muted);font-size:.98rem}
+  pre{
+    direction:ltr;text-align:left;background:#0d1424;color:#dbe4ff;
+    border-radius:12px;padding:16px 18px;margin-top:16px;overflow-x:auto;
+    font-family:'Vazirmatn',ui-monospace,monospace;font-size:.86rem;line-height:1.8;
+  }
+  pre .c{color:#6b7a99}
+  pre .k{color:#c4b5fd}
+  pre .s{color:#7ee0a9}
+  .hook-punch{
+    text-align:center;max-width:760px;margin:40px auto 0;
+    font-size:1.22rem;font-weight:700;color:var(--ink);
+  }
+  .hook-punch .hl{color:var(--brand);}
+
+  /* ===== WHY OOP ===== */
+  .why{background:linear-gradient(180deg,#0a0e1a,#0c1120);color:#e8edfb}
+  .why .section-head p{color:#aab6d0}
+  .why .kicker{color:#a5b4fc}
+  .cards{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+  .card{
+    background:rgba(255,255,255,.04);border:1px solid rgba(148,163,184,.16);
+    border-radius:18px;padding:26px 24px;transition:transform .2s ease, border-color .2s ease, background .2s ease;
+  }
+  .card:hover{transform:translateY(-6px);border-color:rgba(165,180,252,.5);background:rgba(255,255,255,.07)}
+  .card .ic{
+    width:50px;height:50px;border-radius:14px;display:grid;place-items:center;
+    font-size:1.5rem;margin-bottom:16px;
+    background:linear-gradient(135deg,rgba(99,102,241,.28),rgba(34,211,238,.2));
+    border:1px solid rgba(165,180,252,.3);
+  }
+  .why .card h3{font-size:1.12rem;font-weight:800;margin-bottom:8px;color:#fff}
+  .why .card p{color:#a9b4cd;font-size:.96rem}
+  .why-punch{
+    text-align:center;max-width:820px;margin:50px auto 0;
+    font-size:1.28rem;font-weight:800;color:#fff;line-height:1.9;
+  }
+  .why-punch .q{color:#67e8f9}
+
+  /* ===== JOB MARKET ===== */
+  .jobs{background:var(--paper)}
+  .job-grid{display:grid;grid-template-columns:1.05fr .95fr;gap:40px;align-items:center}
+  .job-list{list-style:none;display:flex;flex-direction:column;gap:16px}
+  .job-list li{display:flex;gap:14px;align-items:flex-start}
+  .job-list .chk{
+    flex:0 0 auto;width:30px;height:30px;border-radius:9px;display:grid;place-items:center;
+    background:linear-gradient(135deg,var(--brand),var(--brand-2));color:#fff;font-weight:900;font-size:.9rem;margin-top:3px;
+  }
+  .job-list b{font-weight:800}
+  .job-list span{color:var(--muted);font-size:.98rem}
+  .job-quote{
+    background:linear-gradient(160deg,#111a30,#0d1424);color:#e9edfb;
+    border-radius:22px;padding:34px 30px;box-shadow:var(--shadow);
+    border:1px solid rgba(148,163,184,.16);position:relative;
+  }
+  .job-quote .big{font-size:1.35rem;font-weight:800;line-height:1.85}
+  .job-quote .big .hl{color:var(--accent)}
+  .job-quote .sub{margin-top:16px;color:#a9b4cd;font-size:.98rem}
+
+  /* ===== DIFFERENTIATORS ===== */
+  .diff{background:linear-gradient(180deg,#f7f8fc,#eef1f8)}
+  .diff-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:18px}
+  .diff-card{
+    background:#fff;border:1px solid var(--line);border-radius:18px;padding:26px;
+    display:flex;gap:18px;align-items:flex-start;box-shadow:var(--shadow-soft);
+    transition:transform .18s ease, box-shadow .18s ease;
+  }
+  .diff-card:hover{transform:translateY(-4px);box-shadow:var(--shadow)}
+  .diff-num{
+    flex:0 0 auto;width:46px;height:46px;border-radius:13px;display:grid;place-items:center;
+    font-weight:900;font-size:1.15rem;color:#fff;
+    background:linear-gradient(135deg,var(--brand),var(--brand-2));
+  }
+  .diff-card h3{font-size:1.1rem;font-weight:800;margin-bottom:6px}
+  .diff-card p{color:var(--muted);font-size:.96rem}
+  .vs-note{
+    margin-top:34px;text-align:center;color:var(--muted);font-size:1.02rem;
+    background:#fff;border:1px dashed var(--brand);border-radius:16px;padding:20px 24px;max-width:820px;margin-inline:auto;
+  }
+  .vs-note b{color:var(--ink)}
+
+  /* ===== SYLLABUS ===== */
+  .syl{background:var(--paper)}
+  .phase{margin-top:40px}
+  .phase-head{display:flex;align-items:center;gap:14px;margin-bottom:20px}
+  .phase-badge{
+    font-weight:900;font-size:.9rem;color:#fff;padding:8px 16px;border-radius:100px;
+    background:linear-gradient(100deg,var(--brand),var(--brand-2));white-space:nowrap;
+  }
+  .phase-head .pline{flex:1;height:2px;background:linear-gradient(90deg,var(--line),transparent)}
+  .phase-head .pdesc{color:var(--muted);font-size:.95rem;white-space:nowrap}
+  .lessons{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+  .lesson{
+    background:#fff;border:1px solid var(--line);border-radius:15px;padding:20px;
+    display:flex;gap:14px;align-items:flex-start;transition:transform .16s ease, border-color .16s ease, box-shadow .16s ease;
+  }
+  .lesson:hover{transform:translateY(-4px);border-color:var(--brand);box-shadow:var(--shadow-soft)}
+  .lesson .n{
+    flex:0 0 auto;width:38px;height:38px;border-radius:11px;display:grid;place-items:center;
+    font-weight:900;background:var(--paper-2);color:var(--brand);border:1px solid var(--line);
+  }
+  .lesson.capstone .n{background:linear-gradient(135deg,var(--accent),var(--accent-deep));color:#3b2a05;border:none}
+  .lesson h4{font-size:1rem;font-weight:800;margin-bottom:4px;line-height:1.6}
+  .lesson p{color:var(--muted);font-size:.88rem;line-height:1.7}
+
+  /* ===== PATH (prereq + next) ===== */
+  .path{background:linear-gradient(180deg,#0a0e1a,#0c1120);color:#e8edfb}
+  .path-grid{display:grid;grid-template-columns:1fr auto 1fr;gap:26px;align-items:stretch}
+  .path-col{
+    background:rgba(255,255,255,.045);border:1px solid rgba(148,163,184,.16);
+    border-radius:20px;padding:30px 28px;
+  }
+  .path-col h3{font-size:1.2rem;font-weight:900;margin-bottom:6px;color:#fff;display:flex;align-items:center;gap:10px}
+  .path-col .muted{color:#9fabc6;font-size:.95rem;margin-bottom:18px}
+  .path-col ul{list-style:none;display:flex;flex-direction:column;gap:11px}
+  .path-col li{display:flex;gap:11px;align-items:flex-start;color:#cdd6ea;font-size:.98rem}
+  .path-col li::before{content:"◆";color:var(--brand-3);font-size:.7rem;margin-top:8px;flex:0 0 auto}
+  .path-mid{display:grid;place-items:center;color:#7c88a5}
+  .path-mid .arrow{
+    width:56px;height:56px;border-radius:50%;display:grid;place-items:center;font-size:1.5rem;
+    background:rgba(99,102,241,.18);border:1px solid rgba(165,180,252,.35);color:#c4b5fd;
+  }
+  .path-col.after h3{color:#fff}
+  .path-col.after li::before{color:var(--accent)}
+  .path-tag{font-size:.78rem;font-weight:800;letter-spacing:.5px;color:var(--brand-3);display:block;margin-bottom:4px}
+  .path-col.after .path-tag{color:var(--accent)}
+
+  /* ===== EXERCISES / PROJECTS ===== */
+  .ex{background:var(--paper)}
+  .ex-grid{display:grid;grid-template-columns:1fr 1fr;gap:22px;margin-top:8px}
+  .ex-box{border-radius:20px;padding:30px;border:1px solid var(--line);box-shadow:var(--shadow-soft);background:#fff}
+  .ex-box h3{font-size:1.25rem;font-weight:900;margin-bottom:14px;display:flex;align-items:center;gap:10px}
+  .pill-list{display:flex;flex-wrap:wrap;gap:9px;margin-top:6px}
+  .pill{background:var(--paper-2);border:1px solid var(--line);border-radius:100px;padding:8px 15px;font-size:.9rem;font-weight:600;color:#334155}
+  .proj-list{list-style:none;display:flex;flex-direction:column;gap:14px;margin-top:4px}
+  .proj-list li{display:flex;gap:13px;align-items:flex-start}
+  .proj-list .pn{flex:0 0 auto;width:32px;height:32px;border-radius:9px;display:grid;place-items:center;background:linear-gradient(135deg,var(--brand),var(--brand-2));color:#fff;font-weight:900;font-size:.85rem;margin-top:2px}
+  .proj-list b{font-weight:800}
+  .proj-list span{color:var(--muted);font-size:.94rem}
+
+  /* ===== FINAL CTA ===== */
+  .final{
+    background:
+      radial-gradient(900px 420px at 50% -20%, rgba(99,102,241,.4), transparent 60%),
+      linear-gradient(180deg,#0c1120,#0a0e1a);
+    color:#eef2ff;text-align:center;padding:100px 0;
+  }
+  .final h2{font-size:clamp(1.8rem,4vw,2.9rem);font-weight:900;line-height:1.45;max-width:820px;margin:0 auto}
+  .final h2 .grad{background:linear-gradient(100deg,#a5b4fc,#67e8f9);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .final p{max-width:620px;margin:22px auto 0;color:#c3ccdf;font-size:1.12rem}
+
+  footer{background:#080b14;color:#7c88a5;text-align:center;padding:38px 0;font-size:.92rem}
+  footer b{color:#c3ccdf}
+
+  /* ===== RESPONSIVE ===== */
+  @media (max-width:900px){
+    .stats{grid-template-columns:repeat(2,1fr)}
+    .hook-grid,.job-grid,.diff-grid,.ex-grid{grid-template-columns:1fr}
+    .cards,.lessons{grid-template-columns:1fr 1fr}
+    .path-grid{grid-template-columns:1fr}
+    .path-mid{transform:rotate(90deg)}
+  }
+  @media (max-width:560px){
+    body{font-size:16px}
+    .section{padding:66px 0}
+    .cards,.lessons{grid-template-columns:1fr}
+    .stats{grid-template-columns:1fr 1fr}
+    .btn{width:100%;justify-content:center}
+  }
+</style>
+</head>
+<body>
+
+<!-- ===================== HERO ===================== -->
+<header class="hero">
+  <div class="wrap">
+    <span class="eyebrow">✦ کامل‌ترین دوره‌ی فارسیِ شیء‌گرایی در پایتون</span>
+    <h1>شیء‌گرایی در پایتون را طوری یاد بگیر که<br><span class="grad">مثل یک مهندسِ نرم‌افزار فکر کنی</span></h1>
+    <p class="lead">
+      این دوره درباره‌ی <code>class</code> و <code>self</code> نیست — درباره‌ی <b>طرزِ فکری</b> است که پشتِ جنگو، الگوهای طراحی و معماریِ نرم‌افزار پنهان است. از فلسفه و تاریخچه تا متاکلاس‌ها و بهینه‌سازی: ساده مثل یک آموزشِ خوب، عمیق مثل یک مرجع.
+    </p>
+    <div class="cta-row">
+      <a href="#syllabus" class="btn btn-primary">سرفصل‌ها را ببین ↙</a>
+      <a href="#why" class="btn btn-ghost">چرا باید یاد بگیرم؟</a>
+    </div>
+
+    <div class="stats">
+      <div class="stat"><div class="num">۱۵</div><div class="lbl">فصلِ مفهومی</div></div>
+      <div class="stat"><div class="num">۳</div><div class="lbl">پروژه‌ی واقعیِ بازار کار</div></div>
+      <div class="stat"><div class="num">۵ نوع</div><div class="lbl">تمرین با پاسخِ تشریحی</div></div>
+      <div class="stat"><div class="num">۰ → متاکلاس</div><div class="lbl">از مبتدی تا حرفه‌ای</div></div>
+    </div>
+  </div>
+</header>
+
+<!-- ===================== HOOK ===================== -->
+<section class="section hook">
+  <div class="wrap">
+    <div class="section-head">
+      <span class="kicker">یک صحنه‌ی آشنا</span>
+      <h2 class="title">کدت کار می‌کند — اما نمی‌توانی درباره‌اش تصمیم بگیری</h2>
+      <p>تازه استخدام شده‌ای. اولین وظیفه‌ات: افزودنِ یک روشِ پرداختِ جدید. کد را باز می‌کنی و این را می‌بینی…</p>
+    </div>
+
+    <div class="hook-grid">
+      <div class="code-card bad">
+        <span class="tag">✗ بدونِ شیء‌گرایی</span>
+        <h3>یک فایلِ هزارخطیِ شکننده</h3>
+        <p>برای هر تغییرِ کوچک باید ده‌ها <code>if</code> را پیدا و دستی عوض کنی — و اگر یکی را جا بیندازی، باگِ تولید می‌سازی.</p>
+<pre><span class="c"># هر روشِ جدید = دست‌کاریِ همین تابع</span>
+<span class="k">if</span> payment == <span class="s">"card"</span>:
+    ...
+<span class="k">elif</span> payment == <span class="s">"wallet"</span>:
+    ...
+<span class="c"># و ده‌ها elif دیگر، همه‌جا پخش…</span></pre>
+      </div>
+
+      <div class="code-card good">
+        <span class="tag">✓ با شیء‌گرایی</span>
+        <h3>افزودن = یک کلاسِ تازه</h3>
+        <p>هر روشِ پرداخت یک شیءِ مستقل است. روشِ جدید یعنی یک کلاسِ نو — <b>بدونِ دست‌زدن به کدِ قدیمی و آزموده.</b></p>
+<pre><span class="k">class</span> CryptoPayment(PaymentMethod):
+    <span class="k">def</span> pay(self, amount):
+        ...
+<span class="c"># تمام. کدِ قبلی دست‌نخورده و امن می‌ماند.</span></pre>
+      </div>
+    </div>
+
+    <p class="hook-punch">
+      تفاوتِ این دو، تفاوتِ کسی است که شیء‌گرایی را <span class="hl">می‌فهمد</span> با کسی که فقط از آن استفاده می‌کند.<br>این دوره تو را از گروهِ دوم به گروهِ اول می‌برد.
+    </p>
+  </div>
+</section>
+
+<!-- ===================== WHY OOP MATTERS ===================== -->
+<section class="section why" id="why">
+  <div class="wrap">
+    <div class="section-head">
+      <span class="kicker">جایگاهِ شیء‌گرایی</span>
+      <h2 class="title">چرا شیء‌گرایی، ستونِ نرم‌افزارِ امروز است</h2>
+      <p>شیء‌گرایی یک «موضوعِ درسی» نیست؛ زبانِ مشترکِ ابزارهایی است که هر روز با آن‌ها کار می‌کنی.</p>
+    </div>
+
+    <div class="cards">
+      <div class="card">
+        <div class="ic">🧩</div>
+        <h3>فریمورک‌ها به زبانِ OOP حرف می‌زنند</h3>
+        <p>جنگو، FastAPI، Flask، SQLAlchemy — همه شیء‌گرا هستند. یک مدلِ جنگو یک کلاس است؛ بدونِ OOP کار با آن‌ها همیشه سطحی می‌ماند.</p>
+      </div>
+      <div class="card">
+        <div class="ic">♟️</div>
+        <h3>الگوهای طراحی، OOP‌اند</h3>
+        <p>Factory، Strategy، Observer، Singleton — راه‌حل‌های آزموده‌ی مسائلِ تکرارشونده، همه در قالبِ کلاس و شیء بیان می‌شوند.</p>
+      </div>
+      <div class="card">
+        <div class="ic">🧪</div>
+        <h3>تست‌نویسیِ حرفه‌ای بر آن استوار است</h3>
+        <p>Mockها، Fixtureها و ابزارهای مدرنِ تست، عمیقاً بر مفاهیمِ شیء‌گرا تکیه دارند.</p>
+      </div>
+      <div class="card">
+        <div class="ic">🏛️</div>
+        <h3>معماریِ نرم‌افزار با آن نوشته می‌شود</h3>
+        <p>Clean Architecture، معماریِ لایه‌ای و Domain-Driven Design همه فرض می‌کنند تو شیء‌گرایی را می‌فهمی.</p>
+      </div>
+      <div class="card">
+        <div class="ic">🐍</div>
+        <h3>در پایتون، همه‌چیز شیء است</h3>
+        <p>حتی یک عدد، یک تابع و خودِ یک کلاس. بدونِ OOP، پایتون را نیمه‌کاره می‌شناسی.</p>
+      </div>
+      <div class="card">
+        <div class="ic">🚀</div>
+        <h3>پُلِ عبور از «مبتدی» به «حرفه‌ای»</h3>
+        <p>توانِ خواندنِ کدِ کتابخانه‌های بزرگ و تصمیم‌گیریِ معماری، همان چیزی است که جونیور را از سنیور جدا می‌کند.</p>
+      </div>
+    </div>
+
+    <p class="why-punch">
+      وقتی این‌ها را کنارِ هم می‌گذاری، سوال عوض می‌شود:<br>
+      <span class="q">«چرا باید یاد بگیرم؟»</span> تبدیل می‌شود به <span class="q">«چرا هنوز یاد نگرفته‌ام؟»</span>
+    </p>
+  </div>
+</section>
+
+<!-- ===================== JOB MARKET ===================== -->
+<section class="section jobs">
+  <div class="wrap">
+    <div class="section-head">
+      <span class="kicker">ورود به بازارِ کار</span>
+      <h2 class="title">چرا OOP برای استخدام‌شدن ضروری است</h2>
+      <p>این فقط یک مهارتِ خوب نیست؛ در بیشترِ آگهی‌های استخدامِ پایتون یک <b>شرطِ حداقلی</b> است.</p>
+    </div>
+
+    <div class="job-grid">
+      <ul class="job-list">
+        <li><span class="chk">✓</span><span><b>شرطِ آگهی‌های استخدام.</b> کافی است چند آگهیِ پایتون را بخوانی؛ تقریباً همه تسلط بر OOP را خواسته‌اند.</span></li>
+        <li><span class="chk">✓</span><span><b>کلیدِ کار با فریمورک‌ها.</b> بدونِ OOP، جنگو و FastAPI برایت جعبه‌ی سیاه می‌مانند.</span></li>
+        <li><span class="chk">✓</span><span><b>سوالِ ثابتِ مصاحبه‌ها.</b> طراحیِ کلاس، اصولِ SOLID و ارث‌بری در برابر Composition، سوال‌های همیشگیِ فنی‌اند.</span></li>
+        <li><span class="chk">✓</span><span><b>توانِ خواندنِ کدِ واقعی.</b> کسی که می‌تواند کدِ یک کتابخانه‌ی بزرگ را بخواند، خیلی سریع‌تر رشد می‌کند.</span></li>
+      </ul>
+
+      <div class="job-quote">
+        <div class="big">«کد که کار کند کافی نیست؛ سوالِ واقعی این است: <span class="hl">شش ماهِ بعد، وقتی یک ویژگیِ جدید اضافه می‌شود، آیا کل سیستم به‌هم می‌ریزد؟»</span></div>
+        <div class="sub">این دوره دقیقاً همان مهارت را می‌سازد: نوشتنِ کدی که در برابرِ تغییر، مقاوم و آماده‌ی رشد است — همان چیزی که کارفرما پول می‌دهد تا داشته باشد.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== DIFFERENTIATORS ===================== -->
+<section class="section diff" id="why-this">
+  <div class="wrap">
+    <div class="section-head">
+      <span class="kicker">چرا این دوره؟</span>
+      <h2 class="title">چه چیزی این دوره را از بقیه جدا می‌کند</h2>
+      <p>بیشترِ دوره‌ها یا فقط سینتکس را طوطی‌وار می‌گویند، یا آن‌قدر خشک‌اند که رها می‌کنی. این دوره فرق دارد.</p>
+    </div>
+
+    <div class="diff-grid">
+      <div class="diff-card"><div class="diff-num">۱</div><div><h3>تفکر، نه فقط سینتکس</h3><p>یک فصلِ کامل به «چطور مثل یک طراح فکر کنیم» اختصاص دارد؛ چون تفاوتِ برنامه‌نویس و مهندس، در طرزِ فکر است نه در دانستنِ <code>class</code>.</p></div></div>
+      <div class="diff-card"><div class="diff-num">۲</div><div><h3>مثال‌های واقعیِ نرم‌افزاری</h3><p>خبری از «حیوان» و «خودرو» نیست. همه‌چیز با سناریوهای واقعی آموزش داده می‌شود: سیستمِ پرداخت، کتابخانه، رزرو.</p></div></div>
+      <div class="diff-card"><div class="diff-num">۳</div><div><h3>Tradeoff-محور و صادقانه</h3><p>یاد می‌گیری هیچ راه‌حلی مطلقاً درست نیست — و حتی نقدهای جدی به شیء‌گرایی را می‌شنوی تا بدانی کِی <b>نباید</b> از آن استفاده کنی.</p></div></div>
+      <div class="diff-card"><div class="diff-num">۴</div><div><h3>کامل، از فلسفه تا متاکلاس</h3><p>تاریخچه، MRO و الگوریتم C3، Descriptorها، مدیریتِ حافظه، Performance و متاکلاس‌ها — چیزهایی که بیشترِ دوره‌ها اصلاً لمسشان نمی‌کنند.</p></div></div>
+      <div class="diff-card"><div class="diff-num">۵</div><div><h3>ساده مثلِ w3schools، عمیق مثلِ یک مرجع</h3><p>جمله‌های کوتاه، مثال‌های ملموس و نمودار — اما بدونِ آنکه سطحی بماند. سادگیِ ظاهری، عمقِ واقعی.</p></div></div>
+      <div class="diff-card"><div class="diff-num">۶</div><div><h3>تمرین + پاسخِ تشریحی برای هر فصل</h3><p>پرسشِ مفهومی، دام‌های کدخوانی، کدنویسی، مقایسه و تحلیل، و پرسشِ تفکرِ انتقادی — با پاسخِ کامل و «راهِ دیگر».</p></div></div>
+    </div>
+
+    <p class="vs-note">
+      <b>۷) و در پایان، سه پروژه‌ی واقعی.</b> نه یک مثالِ اسباب‌بازی — بلکه از شنیدنِ نیازِ مبهمِ کارفرما و پرسیدنِ سوالِ درست، تا تحلیلِ نیازمندی و پیاده‌سازیِ مرحله‌به‌مرحله. دقیقاً همان کاری که در روزِ اولِ کار از تو می‌خواهند.
+    </p>
+  </div>
+</section>
+
+<!-- ===================== SYLLABUS ===================== -->
+<section class="section syl" id="syllabus">
+  <div class="wrap">
+    <div class="section-head">
+      <span class="kicker">نقشه‌ی راه</span>
+      <h2 class="title">سرفصلِ دوره — دقیقاً به ترتیبی که باید یاد بگیری</h2>
+      <p>هر فصل روی فصلِ قبل ساخته می‌شود. این ترتیب اتفاقی نیست؛ مسیری است که تو را قدم‌به‌قدم از «چرا» تا «چگونه»ی حرفه‌ای می‌برد.</p>
+    </div>
+
+    <!-- PHASE 1 -->
+    <div class="phase">
+      <div class="phase-head">
+        <span class="phase-badge">گامِ ۱ · بنیان</span>
+        <span class="pdesc">پایه‌ی ذهنی و اولین کدها</span>
+        <span class="pline"></span>
+      </div>
+      <div class="lessons">
+        <div class="lesson"><div class="n">۱</div><div><h4>فلسفه، تاریخچه و چراییِ شیء‌گرایی</h4><p>از کجا آمد، چه دردی را درمان کرد و چرا هنوز می‌ماند. (عمداً بدونِ کد)</p></div></div>
+        <div class="lesson"><div class="n">۲</div><div><h4>مفاهیمِ بنیادین: کلاس، شیء، self و سازنده</h4><p>اولین کدِ شیء‌گرا و درکِ عمیقِ اینکه <code>self</code> واقعاً چیست.</p></div></div>
+        <div class="lesson"><div class="n">۳</div><div><h4>تفکرِ شیء‌گرا</h4><p>کِی و چرا کلاس بسازیم؛ چطور یک مسئله‌ی واقعی را به کلاس‌ها ترجمه کنیم.</p></div></div>
+      </div>
+    </div>
+
+    <!-- PHASE 2 -->
+    <div class="phase">
+      <div class="phase-head">
+        <span class="phase-badge">گامِ ۲ · اصول و ابزار</span>
+        <span class="pdesc">جعبه‌ابزارِ اصلیِ پایتون</span>
+        <span class="pline"></span>
+      </div>
+      <div class="lessons">
+        <div class="lesson"><div class="n">۴</div><div><h4>اصولِ چهارگانه</h4><p>کپسوله‌سازی، انتزاع، ارث‌بری و چندریختی — چهار ستونِ هر زبانِ شیء‌گرا.</p></div></div>
+        <div class="lesson"><div class="n">۵</div><div><h4>Property، دکوراتورهای کلاسی و متدهای جادویی</h4><p>ابزارهایی که «پایتون را پایتون می‌کنند» و کدت را حرفه‌ای.</p></div></div>
+        <div class="lesson"><div class="n">۶</div><div><h4>ارث‌بریِ پیشرفته، MRO و وراثتِ چندگانه</h4><p>مسئله‌ی الماس، الگوریتمِ C3 و Mixinها.</p></div></div>
+      </div>
+    </div>
+
+    <!-- PHASE 3 -->
+    <div class="phase">
+      <div class="phase-head">
+        <span class="phase-badge">گامِ ۳ · طراحی و معماری</span>
+        <span class="pdesc">از «کارکننده» تا «قابلِ نگهداری»</span>
+        <span class="pline"></span>
+      </div>
+      <div class="lessons">
+        <div class="lesson"><div class="n">۷</div><div><h4>Composition، معماری و طراحی</h4><p>«ترکیب را بر ارث‌بری ترجیح بده»، قانونِ دیمتر و معماریِ لایه‌ای.</p></div></div>
+        <div class="lesson"><div class="n">۸</div><div><h4>اصولِ SOLID</h4><p>پنج اصلِ طلاییِ طراحی، با مثال‌های واقعیِ نرم‌افزاری.</p></div></div>
+        <div class="lesson"><div class="n">۹</div><div><h4>اینترفیس‌ها، پروتکل‌ها و ژنریک‌ها</h4><p>ABC، Protocol، Generics و تایپ‌هینترهای پیشرفته.</p></div></div>
+      </div>
+    </div>
+
+    <!-- PHASE 4 -->
+    <div class="phase">
+      <div class="phase-head">
+        <span class="phase-badge">گامِ ۴ · عمقِ زبان</span>
+        <span class="pdesc">جایی که کمترین دوره‌ها می‌روند</span>
+        <span class="pline"></span>
+      </div>
+      <div class="lessons">
+        <div class="lesson"><div class="n">۱۰</div><div><h4>مدیریتِ حافظه و بهینه‌سازی</h4><p>Reference Counting، Garbage Collector، <code>__slots__</code>، weakref و کپی.</p></div></div>
+        <div class="lesson"><div class="n">۱۱</div><div><h4>مدل‌های داده‌ی مدرن</h4><p>dataclass، NamedTuple، Enum و TypedDict برای حذفِ کدِ تکراری.</p></div></div>
+        <div class="lesson"><div class="n">۱۲</div><div><h4>استثناها، سریال‌سازی و Introspection</h4><p>سه ابزارِ «حرفه‌ای‌شدنِ» کد.</p></div></div>
+        <div class="lesson"><div class="n">۱۳</div><div><h4>متاکلاس‌ها</h4><p>کلاس‌هایی که کلاس‌ها را می‌سازند؛ قلبِ جنگو و SQLAlchemy.</p></div></div>
+        <div class="lesson"><div class="n">۱۴</div><div><h4>ماژول‌ها، پکیج‌ها و شیء‌گرایی</h4><p>سازمان‌دهیِ فیزیکیِ کد در پروژه‌های واقعیِ بزرگ.</p></div></div>
+        <div class="lesson"><div class="n">۱۵</div><div><h4>Performance و بهینه‌سازیِ پیشرفته</h4><p>GIL، thread-safety و profiling؛ «اول اندازه بگیر، بعد بهینه کن».</p></div></div>
+      </div>
+    </div>
+
+    <!-- PHASE 5 -->
+    <div class="phase">
+      <div class="phase-head">
+        <span class="phase-badge">گامِ ۵ · پروژه‌های عملی</span>
+        <span class="pdesc">همه‌چیز را کنارِ هم بگذار</span>
+        <span class="pline"></span>
+      </div>
+      <div class="lessons">
+        <div class="lesson capstone"><div class="n">۱۶</div><div><h4>پروژه ۱ — سیستمِ مدیریتِ کتابخانه</h4><p>از تحلیلِ نیازمندی تا پیاده‌سازیِ مرحله‌به‌مرحله.</p></div></div>
+        <div class="lesson capstone"><div class="n">۱۶</div><div><h4>پروژه ۲ — سیستمِ پرداخت و صورت‌حساب</h4><p>تمرکز بر چندریختی، الگوی Strategy و SOLID.</p></div></div>
+        <div class="lesson capstone"><div class="n">۱۶</div><div><h4>پروژه ۳ — سیستمِ رزروِ آنلاین</h4><p>ماشینِ حالت، معماریِ لایه‌ای و thread-safety.</p></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== PATH: PREREQ + NEXT ===================== -->
+<section class="section path">
+  <div class="wrap">
+    <div class="section-head">
+      <span class="kicker">مسیرِ تو</span>
+      <h2 class="title">قبل از شروع، و بعد از پایان</h2>
+      <p>این دوره دقیقاً می‌داند از کجا شروع می‌کنی و تو را به کجا می‌رساند.</p>
+    </div>
+
+    <div class="path-grid">
+      <div class="path-col before">
+        <h3>🎒 قبل از شروع باید بلد باشی</h3>
+        <p class="muted">اگر با «تابع» راحتی، آماده‌ای. در شیء‌گرایی، متد چیزی جز تابعی نیست که به یک شیء چسبیده.</p>
+        <ul>
+          <li>متغیرها و انواعِ داده (عدد، رشته، بولی)</li>
+          <li>ساختارهای داده‌ی پایه: list، dict، tuple، set</li>
+          <li>کنترلِ جریان: <code>if / elif / else</code></li>
+          <li>حلقه‌ها: <code>for</code> و <code>while</code></li>
+          <li>توابع: تعریف، پارامتر، آرگومان، مقدارِ بازگشتی</li>
+        </ul>
+      </div>
+
+      <div class="path-mid"><div class="arrow">←</div></div>
+
+      <div class="path-col after">
+        <span class="path-tag">پس از این دوره آماده‌ای برای…</span>
+        <h3>🎯 قدمِ بعدی‌ات</h3>
+        <p class="muted">با شیء‌گراییِ محکم، دنیای حرفه‌ای در برابرت باز می‌شود:</p>
+        <ul>
+          <li>فریمورک‌های وب: جنگو، FastAPI، Flask</li>
+          <li>الگوهای طراحی (Design Patterns)</li>
+          <li>تست‌نویسیِ حرفه‌ای (pytest، Mock)</li>
+          <li>معماریِ تمیز و Domain-Driven Design</li>
+          <li>ORMها و کارِ عمیق با پایگاه داده (SQLAlchemy)</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== EXERCISES / PROJECTS ===================== -->
+<section class="section ex">
+  <div class="wrap">
+    <div class="section-head">
+      <span class="kicker">یادگیری با تمرین</span>
+      <h2 class="title">خواندن کافی نیست — باید تمرین کنی</h2>
+      <p>هر فصل با مجموعه‌ای از تمرین‌های چندلایه و پاسخِ تشریحی همراه است، و دوره با سه پروژه‌ی واقعی به اوج می‌رسد.</p>
+    </div>
+
+    <div class="ex-grid">
+      <div class="ex-box">
+        <h3>🧠 پنج نوع تمرین در هر فصل</h3>
+        <p style="color:var(--muted);margin-bottom:12px">طوری طراحی شده که فقط «حفظ» نکنی، بلکه <b>بفهمی و به‌کار ببری</b>:</p>
+        <div class="pill-list">
+          <span class="pill">پرسشِ مفهومی</span>
+          <span class="pill">دام‌های کدخوانی</span>
+          <span class="pill">کدنویسی</span>
+          <span class="pill">مقایسه و تحلیل</span>
+          <span class="pill">تفکرِ انتقادی</span>
+        </div>
+        <p style="color:var(--muted);margin-top:16px;font-size:.95rem">هر تمرین پاسخِ کاملِ تشریحی دارد — و هرجا راهِ بهتری هست، بخشِ «راهِ دیگر» هم آورده شده.</p>
+      </div>
+
+      <div class="ex-box">
+        <h3>🛠️ سه پروژه‌ی واقعیِ بازارِ کار</h3>
+        <ul class="proj-list">
+          <li><span class="pn">۱</span><span><b>سیستمِ مدیریتِ کتابخانه</b> — استخراجِ کلاس از نیازمندی، Enum، dataclass و سریال‌سازی.</span></li>
+          <li><span class="pn">۲</span><span><b>سیستمِ پرداخت و صورت‌حساب</b> — چندریختی، الگوی Strategy و پنج اصلِ SOLID.</span></li>
+          <li><span class="pn">۳</span><span><b>سیستمِ رزروِ آنلاین</b> — ماشینِ حالت، معماریِ لایه‌ای و thread-safety.</span></li>
+        </ul>
+        <p style="color:var(--muted);margin-top:14px;font-size:.95rem">هر پروژه از زبانِ یک کارفرمای غیرفنی شروع می‌شود — همان‌طور که در دنیای واقعی اتفاق می‌افتد.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== FINAL CTA ===================== -->
+<section class="final">
+  <div class="wrap">
+    <h2>وقتش رسیده که پایتون را <span class="grad">نه فقط بنویسی، بلکه طراحی کنی</span></h2>
+    <p>از فصلِ اول شروع کن — بدونِ حتی یک خطِ کد، فقط با یک سوال: شیء‌گرایی از کجا آمد و چه دردی را درمان کرد؟ بقیه‌ی مسیر، قدم‌به‌قدم ساخته می‌شود.</p>
+    <div class="cta-row">
+      <a href="#syllabus" class="btn btn-primary">همین حالا شروع کن ↙</a>
+      <a href="#why-this" class="btn btn-ghost">چرا این دوره؟</a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <b>شیء‌گرایی در پایتون — دوره‌ی جامع و کاربردی</b><br>
+    از فلسفه تا متاکلاس · ۱۵ فصلِ مفهومی و ۳ پروژه‌ی عملی · طراحی‌شده برای ورود به بازارِ کار
+  </div>
+</footer>
+
+</body>
+</html>

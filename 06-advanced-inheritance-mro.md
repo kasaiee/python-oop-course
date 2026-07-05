@@ -41,13 +41,13 @@ class Comparable:
     def __lt__(self, other):
         return self.value < other.value
 
-class Number(Serializable, Comparable):    # از دو والد ارث برد
+class Number(Serializable, Comparable):    # inherited from two parents
     def __init__(self, value):
         self.value = value
 
 n = Number(5)
-print(n.to_json())          # {"value": 5}   ← از Serializable
-print(Number(3) < Number(7))  # True         ← از Comparable
+print(n.to_json())          # {"value": 5}   ← from Serializable
+print(Number(3) < Number(7))  # True         ← from Comparable
 ```
 
 ### مسئله‌ی الماس (Diamond Problem)
@@ -85,11 +85,11 @@ class D(B, C):
         super().__init__()
 
 D()
-# خروجی:
+# Output:
 # D
 # B
 # C
-# A   ← فقط یک‌بار! نه دو بار
+# A   ← only once! not twice
 ```
 
 نکته‌ی مهم: `A` فقط **یک‌بار** اجرا شد، با اینکه هم `B` و هم `C` از آن ارث می‌برند و هر دو `super()` صدا زدند. این معجزه‌ی MRO و الگوریتم C3 است.
@@ -199,13 +199,13 @@ print([c.__name__ for c in D.mro()])
 
 ```python
 class JSONMixin:
-    """قابلیت تبدیل به JSON را اضافه می‌کند"""
+    """adds JSON conversion capability"""
     def to_json(self):
         import json
         return json.dumps(self.__dict__, ensure_ascii=False)
 
 class TimestampMixin:
-    """قابلیت ثبت زمان ساخت را اضافه می‌کند"""
+    """adds creation-time recording capability"""
     def __init__(self, *args, **kwargs):
         import time
         self.created_at = time.time()
@@ -217,8 +217,8 @@ class User(TimestampMixin, JSONMixin):
         super().__init__()
 
 u = User("ali")
-print(u.to_json())        # {"name": "ali", "created_at": ...}  ← از JSONMixin
-print(u.created_at)       # زمان ساخت                          ← از TimestampMixin
+print(u.to_json())        # {"name": "ali", "created_at": ...}  ← from JSONMixin
+print(u.created_at)       # creation time                          ← from TimestampMixin
 ```
 
 `User` موجودیتِ اصلی است؛ `JSONMixin` و `TimestampMixin` قابلیت‌های افزوده. هرکدام را می‌توان به هر کلاسِ دیگری هم چسباند. این ماژولاریتی، جوهرِ Mixin است.
@@ -257,8 +257,8 @@ class Plugin:
 
     def __init_subclass__(cls, **kwargs):
         super().__init_subclass__(**kwargs)
-        Plugin.registry.append(cls)      # هر زیرکلاس خودکار ثبت می‌شود
-        print(f"پلاگین ثبت شد: {cls.__name__}")
+        Plugin.registry.append(cls)      # each subclass is registered automatically
+        print(f"Plugin registered: {cls.__name__}")
 
 class EmailPlugin(Plugin):
     pass
@@ -266,9 +266,9 @@ class EmailPlugin(Plugin):
 class SMSPlugin(Plugin):
     pass
 
-# خروجی هنگام تعریف (نه ساخت شیء):
-# پلاگین ثبت شد: EmailPlugin
-# پلاگین ثبت شد: SMSPlugin
+# output at definition time (not object creation):
+# Plugin registered: EmailPlugin
+# Plugin registered: SMSPlugin
 print([c.__name__ for c in Plugin.registry])   # ['EmailPlugin', 'SMSPlugin']
 ```
 
@@ -283,12 +283,12 @@ class Handler:
     def __init_subclass__(cls, **kwargs):
         super().__init_subclass__(**kwargs)
         if not hasattr(cls, "handle"):
-            raise TypeError(f"{cls.__name__} باید متد handle داشته باشد")
+            raise TypeError(f"{cls.__name__} must have a handle method")
 
 class GoodHandler(Handler):
     def handle(self): ...
 
-# class BadHandler(Handler):    # TypeError: BadHandler باید متد handle داشته باشد
+# class BadHandler(Handler):    # TypeError: BadHandler must have a handle method
 #     pass
 ```
 
@@ -308,14 +308,14 @@ class Model:
         cls._table = getattr(meta, "table_name", cls.__name__.lower())
 
 class User(Model):
-    class Meta:                       # متادیتای جداگانه از منطق اصلی
+    class Meta:                       # metadata separate from the main logic
         table_name = "users"
 
 class Product(Model):
-    pass                              # بدون Meta → پیش‌فرض
+    pass                              # without Meta → default
 
-print(User._table)      # users     ← از Meta خوانده شد
-print(Product._table)   # product   ← پیش‌فرض
+print(User._table)      # users     ← read from Meta
+print(Product._table)   # product   ← default
 ```
 
 مزیت این الگو: متادیتای پیکربندی (نام جدول، ترتیب پیش‌فرض و...) از منطقِ اصلیِ کلاس جدا می‌ماند و کد خواناتر می‌شود. اگر تا حالا مدل جنگو نوشته‌اید، `class Meta` را دیده‌اید — حالا می‌دانید پشتش چه می‌گذرد.

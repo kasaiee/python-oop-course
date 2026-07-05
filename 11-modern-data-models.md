@@ -31,7 +31,7 @@
 class Product:
     def __init__(self, name, price, stock, category):
         self.name = name
-        self.price = price          # هر فیلد دو بار نوشته شد
+        self.price = price          # each field was written twice
         self.stock = stock
         self.category = category
 
@@ -57,12 +57,12 @@ from dataclasses import dataclass
 class Product:
     name: str
     price: int
-    stock: int = 0                  # مقدار پیش‌فرض
-    category: str = "عمومی"
+    stock: int = 0                  # default value
+    category: str = "general"
 
-p = Product("کیبورد", 500_000)
-print(p)                            # Product(name='کیبورد', price=500000, stock=0, category='عمومی')
-print(p == Product("کیبورد", 500_000))   # True
+p = Product("Keyboard", 500_000)
+print(p)                            # Product(name='Keyboard', price=500000, stock=0, category='general')
+print(p == Product("Keyboard", 500_000))   # True
 ```
 
 همین. `@dataclass` در پشت‌صحنه خودکار می‌سازد: `__init__`، `__repr__`، `__eq__` و چند متدِ دیگر — همه از روی تعریفِ فیلدها با تایپ‌هینت. کدی که ۲۰ خط بود، حالا ۵ خط است.
@@ -74,15 +74,15 @@ print(p == Product("کیبورد", 500_000))   # True
 ```python
 from dataclasses import dataclass
 
-@dataclass(frozen=True)             # تغییرناپذیر (Immutable)
+@dataclass(frozen=True)             # immutable
 class Point:
     x: int
     y: int
 
 p = Point(1, 2)
-# p.x = 5      # FrozenInstanceError — نمی‌توان تغییر داد
+# p.x = 5      # FrozenInstanceError — cannot be changed
 
-@dataclass(order=True)              # عملگرهای مقایسه (< > <= >=) هم ساخته می‌شوند
+@dataclass(order=True)              # comparison operators (< > <= >=) are also generated
 class Version:
     major: int
     minor: int
@@ -112,8 +112,8 @@ class Rectangle:
 
     def __post_init__(self):
         if self.width <= 0 or self.height <= 0:
-            raise ValueError("ابعاد باید مثبت باشند")
-        self.area = self.width * self.height     # محاسبه‌ی خودکار
+            raise ValueError("dimensions must be positive")
+        self.area = self.width * self.height     # automatic computation
 
 r = Rectangle(3, 4)
 print(r.area)      # 12
@@ -131,7 +131,7 @@ from dataclasses import dataclass, InitVar
 @dataclass
 class User:
     name: str
-    password: InitVar[str]           # فقط برای init، فیلدِ دائمی نمی‌شود
+    password: InitVar[str]           # only for init, does not become a permanent field
     password_hash: str = ""
 
     def __post_init__(self, password):
@@ -139,7 +139,7 @@ class User:
 
 u = User("ali", "1234")
 print(u.password_hash)          # hashed(1234)
-print(hasattr(u, "password"))   # False — password ذخیره نشد
+print(hasattr(u, "password"))   # False — password was not stored
 ```
 
 ### field(default_factory=...)
@@ -151,12 +151,12 @@ from dataclasses import dataclass, field
 
 @dataclass
 class Cart:
-    items: list = field(default_factory=list)    # هر شیء لیستِ تازه‌ی خودش
+    items: list = field(default_factory=list)    # each object its own fresh list
 
 c1 = Cart()
 c2 = Cart()
-c1.items.append("کتاب")
-print(c2.items)      # [] — مستقل، بدون نشت
+c1.items.append("Book")
+print(c2.items)      # [] — independent, no leak
 ```
 
 `default_factory=list` یعنی «برای هر نمونه، یک `list()`ِ تازه بساز» — راهِ درستِ پیش‌فرضِ تغییرپذیر. تفاوتش با `default`: `default` یک مقدارِ ثابتِ مشترک است؛ `default_factory` هر بار مقدارِ تازه می‌سازد.
@@ -170,22 +170,22 @@ print(c2.items)      # [] — مستقل، بدون نشت
 class Product:
     price: int
 
-p = Product("رشته!")     # خطا نمی‌دهد! پایتون تایپ را اجبار نمی‌کند
-print(p.price)           # رشته!
+p = Product("string!")     # no error! Python does not enforce types
+print(p.price)           # string!
 ```
 
 اینجا **Pydantic** وارد می‌شود. `Pydantic.BaseModel` شبیهِ dataclass است اما نوع را در زمانِ اجرا **اعتبارسنجی و تبدیل** می‌کند:
 
 ```python
-# نیازمند نصب: pip install pydantic
+# requires installing: pip install pydantic
 from pydantic import BaseModel
 
 class Product(BaseModel):
     price: int
 
-p = Product(price="500")     # Pydantic خودکار به int تبدیل می‌کند
+p = Product(price="500")     # Pydantic converts to int automatically
 print(p.price, type(p.price))    # 500 <class 'int'>
-# Product(price="سلام")      # ValidationError — قابلِ تبدیل نیست
+# Product(price="hello")      # ValidationError — not convertible
 ```
 
 **Tradeoff:** `@dataclass` سبک، بخشی از کتابخانه‌ی استاندارد، و سریع است — مناسبِ داده‌ی داخلیِ مطمئن. Pydantic سنگین‌تر است اما اعتبارسنجیِ قوی می‌دهد — مناسبِ داده‌ی ورودیِ نامطمئن (API، فرم، فایلِ کاربر). انتخاب بستگی دارد به اینکه داده از کجا می‌آید.
@@ -202,7 +202,7 @@ class Point:
     x: int
     y: int
 
-# معادلِ نوشتنِ __slots__ = ("x", "y") به‌صورت دستی، اما تمیزتر
+# equivalent to writing __slots__ = ("x", "y") manually, but cleaner
 ```
 
 این هم مزیتِ dataclass (کمتر کد) و هم مزیتِ `__slots__` (حافظه‌ی کمتر) را می‌دهد.
@@ -223,10 +223,10 @@ class Point(NamedTuple):
     y: int
 
 p = Point(1, 2)
-print(p.x, p.y)      # 1 2 — دسترسی با نام
-print(p[0])          # 1 — و هم مثل tuple با ایندکس
-x, y = p             # قابلِ unpack مثل tuple
-# p.x = 5            # AttributeError — تغییرناپذیر
+print(p.x, p.y)      # 1 2 — access by name
+print(p[0])          # 1 — and also by index like a tuple
+x, y = p             # unpackable like a tuple
+# p.x = 5            # AttributeError — immutable
 ```
 
 `NamedTuple` وقتی عالی است که یک رکوردِ کوچکِ تغییرناپذیر می‌خواهید که مثل tuple هم رفتار کند (unpack، ایندکس).
@@ -242,9 +242,9 @@ class UserDict(TypedDict):
     name: str
     age: int
 
-u: UserDict = {"name": "ali", "age": 30}     # یک dict معمولی
+u: UserDict = {"name": "ali", "age": 30}     # an ordinary dict
 print(u["name"])      # ali
-# تایپ‌چکر می‌داند u["age"] یک int است و اگر کلیدِ اشتباه بزنید هشدار می‌دهد
+# the type checker knows u["age"] is an int and warns if you use a wrong key
 ```
 
 `TypedDict` وقتی مفید است که با دیکشنری کار می‌کنید (مثلاً داده‌ی JSON) اما می‌خواهید ساختارش تایپ‌چک شود — بدونِ تبدیل به کلاس.
@@ -275,12 +275,12 @@ print(order_status.name)         # PENDING
 چرا بهتر از رشته؟ مقایسه‌ی نمونه‌ها:
 
 ```python
-# با رشته — شکننده و مستعدِ غلطِ املایی
-if order_status == "penging":    # غلطِ املایی! هیچ خطایی نمی‌دهد، فقط False
+# with a string — fragile and prone to typos
+if order_status == "penging":    # a typo! it raises no error, just False
     ...
 
-# با Enum — امن
-if order_status == OrderStatus.PENDING:    # اگر غلط بنویسید، AttributeError
+# with Enum — safe
+if order_status == OrderStatus.PENDING:    # if you type it wrong, AttributeError
     ...
 ```
 
@@ -298,7 +298,7 @@ class Priority(Enum):
     LOW = 1
     MEDIUM = 2
     HIGH = 3
-    # URGENT = 1     # اگر این را اضافه کنید: ValueError (تکراری با LOW)
+    # URGENT = 1     # if you add this: ValueError (duplicate of LOW)
 ```
 
 `@unique` تضمین می‌کند مقادیر یکتا بمانند — مفید برای جلوگیری از خطای سهوی.

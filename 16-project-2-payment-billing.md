@@ -101,12 +101,12 @@ class LineItem:
     quantity: int = 1
 
     @property
-    def subtotal(self):                  # فقط‌خواندنی (فصل ۵)
+    def subtotal(self):                  # read-only (Ch. 5)
         return self.unit_price * self.quantity
 
 @dataclass
 class Invoice:
-    items: list = field(default_factory=list)   # پیش‌فرضِ امن (فصل ۱۰)
+    items: list = field(default_factory=list)   # safe default (Ch. 10)
     tax_rate: float = 0.09
 
     def add_item(self, item):
@@ -126,7 +126,7 @@ from abc import ABC, abstractmethod
 class Discount(ABC):
     @abstractmethod
     def apply(self, amount: int) -> int:
-        """مبلغِ تخفیف را برمی‌گرداند"""
+        """returns the discount amount"""
 
 class PercentageDiscount(Discount):
     def __init__(self, percent):
@@ -138,11 +138,11 @@ class FixedDiscount(Discount):
     def __init__(self, value):
         self.value = value
     def apply(self, amount):
-        return min(self.value, amount)      # تخفیف از مبلغ بیشتر نشود
+        return min(self.value, amount)      # discount should not exceed the amount
 
 class NoDiscount(Discount):
     def apply(self, amount):
-        return 0                            # الگوی Null Object
+        return 0                            # Null Object pattern
 ```
 
 `NoDiscount` یک ترفندِ تمیز است (الگوی Null Object): به‌جای بررسیِ `if discount is None`، همیشه یک تخفیف داریم که صفر برمی‌گرداند. این کد را ساده‌تر می‌کند.
@@ -164,21 +164,21 @@ class Invoice:
 
     def total(self):
         sub = self.subtotal()
-        discounted = sub - self.discount.apply(sub)     # اول تخفیف
-        return int(discounted * (1 + self.tax_rate))    # بعد مالیات
+        discounted = sub - self.discount.apply(sub)     # discount first
+        return int(discounted * (1 + self.tax_rate))    # after tax
 
-    def __str__(self):                                  # نمایشِ خوانا (فصل ۵)
+    def __str__(self):                                  # readable representation (Ch. 5)
         lines = [f"  {i.name}: {i.subtotal:,} ({i.quantity}×{i.unit_price:,})"
                  for i in self.items]
-        return ("فاکتور:\n" + "\n".join(lines) +
-                f"\n  جمع: {self.subtotal():,}"
-                f"\n  قابلِ پرداخت: {self.total():,} تومان")
+        return ("Invoice:\n" + "\n".join(lines) +
+                f"\n  Subtotal: {self.subtotal():,}"
+                f"\n  Payable: {self.total():,} Toman")
 
 inv = Invoice(tax_rate=0.09, discount=PercentageDiscount(10))
-inv.add_item(LineItem("کیبورد", 500_000))
-inv.add_item(LineItem("موس", 200_000, quantity=2))
+inv.add_item(LineItem("Keyboard", 500_000))
+inv.add_item(LineItem("mouse", 200_000, quantity=2))
 print(inv)
-print("مبلغِ نهایی:", inv.total())
+print("Final amount:", inv.total())
 ```
 
 توجه کنید که `total()` هیچ `if`ی برای نوعِ تخفیف ندارد؛ فقط `self.discount.apply(sub)` را صدا می‌زند و هر نوع تخفیفی به‌شکلِ خودش پاسخ می‌دهد — **چندریختی** (فصل ۴) در عمل.
@@ -190,55 +190,55 @@ print("مبلغِ نهایی:", inv.total())
 ```python
 from abc import ABC, abstractmethod
 
-# استثناهای پرداخت (فصل ۴ و ۱۲)
+# payment exceptions (Ch. 4 and 12)
 class PaymentError(Exception): pass
 class InsufficientFundsError(PaymentError): pass
 class CardExpiredError(PaymentError): pass
 
-# رابطِ کوچکِ ۱: پرداخت
+# small interface 1: payment
 class Payable(ABC):
     @abstractmethod
     def pay(self, amount: int) -> str: ...
 
-# رابطِ کوچکِ ۲: بازگشتِ وجه (جدا، طبقِ ISP)
+# small interface 2: refund (separate, per ISP)
 class Refundable(ABC):
     @abstractmethod
     def refund(self, amount: int) -> str: ...
 
-# بانکی: هم pay هم refund
+# bank: both pay and refund
 class BankPayment(Payable, Refundable):
     def __init__(self, card_number, balance):
         self.card_number = card_number
         self.balance = balance
     def pay(self, amount):
         if amount > self.balance:
-            raise InsufficientFundsError(f"موجودی {self.balance:,} کافی نیست")
+            raise InsufficientFundsError(f"balance {self.balance:,} is insufficient")
         self.balance -= amount
-        return f"کارتِ {self.card_number[-4:]}: {amount:,} پرداخت شد"
+        return f"Card {self.card_number[-4:]}: {amount:,} paid"
     def refund(self, amount):
         self.balance += amount
-        return f"کارتِ {self.card_number[-4:]}: {amount:,} بازگشت شد"
+        return f"Card {self.card_number[-4:]}: {amount:,} refunded"
 
-# کیفِ پول: هم pay هم refund
+# wallet: both pay and refund
 class WalletPayment(Payable, Refundable):
     def __init__(self, user_id, balance):
         self.user_id = user_id
         self.balance = balance
     def pay(self, amount):
         if amount > self.balance:
-            raise InsufficientFundsError("موجودیِ کیفِ پول کافی نیست")
+            raise InsufficientFundsError("wallet balance is insufficient")
         self.balance -= amount
-        return f"کیفِ پولِ {self.user_id}: {amount:,} پرداخت شد"
+        return f"Wallet {self.user_id}: {amount:,} paid"
     def refund(self, amount):
         self.balance += amount
-        return f"کیفِ پولِ {self.user_id}: {amount:,} بازگشت شد"
+        return f"Wallet {self.user_id}: {amount:,} refunded"
 
-# رمزارز: فقط pay (طبقِ ISP مجبور به refund نیست)
+# crypto: only pay (per ISP, not forced to refund)
 class CryptoPayment(Payable):
     def __init__(self, wallet_address):
         self.wallet_address = wallet_address
     def pay(self, amount):
-        return f"رمزارز به {self.wallet_address[:6]}...: معادلِ {amount:,} پرداخت شد"
+        return f"Crypto to {self.wallet_address[:6]}...: equivalent of {amount:,} paid"
 ```
 
 نکته‌ی کلیدی: `CryptoPayment` فقط از `Payable` ارث می‌برد، نه `Refundable`. پس مجبور نیست `refund`ی که نمی‌تواند انجام دهد را با `NotImplementedError` پر کند — که هم ISP و هم LSP (فصل ۸) را نقض می‌کرد. رابط‌های کوچک، این را حل کردند.
@@ -252,15 +252,15 @@ class PaymentProcessor:
     def pay_invoice(self, invoice: Invoice, method: Payable) -> str:
         amount = invoice.total()
         try:
-            result = method.pay(amount)      # نمی‌داند کدام روش است
+            result = method.pay(amount)      # it doesn't know which method it is
             return f"✓ {result}"
-        except PaymentError as e:            # همه‌ی خطاهای پرداخت (فصل ۴)
-            return f"✗ پرداخت ناموفق: {e}"
+        except PaymentError as e:            # all payment errors (Ch. 4)
+            return f"✗ Payment failed: {e}"
 
     def refund_invoice(self, invoice: Invoice, method) -> str:
-        # فقط اگر روش قابلیتِ بازگشت داشته باشد
+        # only if the method supports refunds
         if not isinstance(method, Refundable):
-            return "✗ این روشِ پرداخت قابلیتِ بازگشتِ وجه ندارد"
+            return "✗ this payment method does not support refunds"
         return f"✓ {method.refund(invoice.total())}"
 ```
 
@@ -272,25 +272,25 @@ class PaymentProcessor:
 processor = PaymentProcessor()
 
 inv = Invoice(discount=PercentageDiscount(10))
-inv.add_item(LineItem("لپ‌تاپ", 30_000_000))
+inv.add_item(LineItem("laptop", 30_000_000))
 print(inv)
 print()
 
-# پرداختِ موفق با کارتِ بانکی
+# successful payment with a bank card
 bank = BankPayment("6037991122334455", balance=50_000_000)
 print(processor.pay_invoice(inv, bank))
 
-# پرداختِ ناموفق — موجودیِ ناکافی
+# failed payment — insufficient balance
 poor_wallet = WalletPayment("u1", balance=1_000_000)
 print(processor.pay_invoice(inv, poor_wallet))
 
-# رمزارز — کار می‌کند برای پرداخت
+# crypto — works for payment
 crypto = CryptoPayment("0xABCDEF123456")
 print(processor.pay_invoice(inv, crypto))
 
-# اما بازگشتِ وجهِ رمزارز ممکن نیست
+# but crypto refunds are not possible
 print(processor.refund_invoice(inv, crypto))
-# بازگشتِ وجهِ بانکی ممکن است
+# bank refunds are possible
 print(processor.refund_invoice(inv, bank))
 ```
 
@@ -305,16 +305,16 @@ class GiftCardPayment(Payable, Refundable):
         self.balance = balance
     def pay(self, amount):
         if amount > self.balance:
-            raise InsufficientFundsError("اعتبارِ کارتِ هدیه کافی نیست")
+            raise InsufficientFundsError("gift card balance is insufficient")
         self.balance -= amount
-        return f"کارتِ هدیه {self.code}: {amount:,} پرداخت شد"
+        return f"Gift card {self.code}: {amount:,} paid"
     def refund(self, amount):
         self.balance += amount
-        return f"کارتِ هدیه {self.code}: {amount:,} بازگشت شد"
+        return f"Gift card {self.code}: {amount:,} refunded"
 
-# بدونِ هیچ تغییری در Invoice، PaymentProcessor یا روش‌های دیگر:
+# without any change to Invoice, PaymentProcessor, or the other methods:
 gift = GiftCardPayment("GIFT-2026", balance=40_000_000)
-print(processor.pay_invoice(inv, gift))       # کار می‌کند!
+print(processor.pay_invoice(inv, gift))       # it works!
 ```
 
 `PaymentProcessor`، `Invoice` و بقیه‌ی کد **دست‌نخورده** ماندند. این ثمره‌ی مستقیمِ OCP و DIP است: سیستم برای توسعه باز، و برای تغییر بسته.

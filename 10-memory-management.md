@@ -25,13 +25,13 @@
 
 ### اشیاء، Heap و ارجاع
 
-در پایتون، هر شیء در بخشی از حافظه به نام **Heap** ساخته می‌شود. متغیرها خودِ شیء را نگه نمی‌دارند؛ فقط یک **ارجاع** (اشاره‌گر) به آن شیء روی Heap‌اند. این همان نکته‌ای است که در فصل سوم درباره‌ی `self` گفتیم.
+در پایتون، هر شیء در بخشی از حافظه به نام **Heap** ساخته می‌شود. متغیرها خودِ شیء را نگه نمی‌دارند؛ فقط یک **ارجاع** (اشاره‌گر) به آن شیء روی Heap‌اند. این همان نکته‌ای است که در فصل دوم درباره‌ی `self` گفتیم.
 
 ```python
-a = [1, 2, 3]      # یک لیست روی Heap ساخته می‌شود، a به آن اشاره می‌کند
-b = a              # b به همان لیست اشاره می‌کند — کپی نمی‌شود!
+a = [1, 2, 3]      # a list is created on the Heap, a points to it
+b = a              # b points to the same list — no copy is made!
 b.append(4)
-print(a)           # [1, 2, 3, 4] — چون a و b یک شیء واحدند
+print(a)           # [1, 2, 3, 4] — because a and b are one single object
 print(a is b)      # True
 ```
 
@@ -43,13 +43,13 @@ print(a is b)      # True
 
 ```python
 class ShoppingCart:
-    def __init__(self, items=[]):      # دام! لیستِ پیش‌فرض مشترک می‌شود
+    def __init__(self, items=[]):      # trap! the default list becomes shared
         self.items = items
 
 c1 = ShoppingCart()
 c2 = ShoppingCart()
-c1.items.append("کتاب")
-print(c2.items)      # ['کتاب'] — فاجعه! c2 هم آن را دید
+c1.items.append("Book")
+print(c2.items)      # ['Book'] — disaster! c2 saw it too
 ```
 
 چرا؟ چون لیستِ پیش‌فرض **یک‌بار** هنگام تعریفِ تابع ساخته می‌شود و بینِ همه‌ی فراخوانی‌ها مشترک می‌ماند. راهِ درست:
@@ -57,12 +57,12 @@ print(c2.items)      # ['کتاب'] — فاجعه! c2 هم آن را دید
 ```python
 class ShoppingCart:
     def __init__(self, items=None):
-        self.items = items if items is not None else []   # هر بار لیستِ تازه
+        self.items = items if items is not None else []   # a fresh list each time
 
 c1 = ShoppingCart()
 c2 = ShoppingCart()
-c1.items.append("کتاب")
-print(c2.items)      # [] — درست
+c1.items.append("Book")
+print(c2.items)      # [] — correct
 ```
 
 قاعده‌ی طلایی: **هرگز شیءِ تغییرپذیر (list، dict، set) را به‌عنوان مقدارِ پیش‌فرضِ پارامتر نگذارید.** از `None` استفاده کنید و درون تابع بسازید.
@@ -76,11 +76,11 @@ print(c2.items)      # [] — درست
 ```python
 import sys
 a = [1, 2, 3]
-print(sys.getrefcount(a))   # تعدادِ ارجاع‌ها (کمی بیشتر، چون خودِ getrefcount هم یکی می‌سازد)
+print(sys.getrefcount(a))   # number of references (a bit more, because getrefcount itself creates one)
 b = a
-print(sys.getrefcount(a))   # یکی بیشتر شد
+print(sys.getrefcount(a))   # increased by one
 del b
-print(sys.getrefcount(a))   # دوباره کم شد
+print(sys.getrefcount(a))   # decreased again
 ```
 
 **۲. Garbage Collector (GC):** شمارشِ ارجاع یک نقطه‌ضعف دارد: **ارجاعِ حلقوی** (Cyclic Reference). اگر دو شیء به هم اشاره کنند، شمارنده‌شان هرگز صفر نمی‌شود، حتی اگر هیچ‌کس دیگری به آن‌ها اشاره نکند:
@@ -92,18 +92,18 @@ class Node:
 
 a = Node()
 b = Node()
-a.partner = b      # a به b اشاره می‌کند
-b.partner = a      # b به a اشاره می‌کند — حلقه!
+a.partner = b      # a points to b
+b.partner = a      # b points to a — a cycle!
 del a
 del b
-# شمارنده‌ی هیچ‌کدام صفر نشد، اما هیچ‌کس دیگری به آن‌ها دسترسی ندارد
+# neither counter reached zero, but nobody else can access them
 ```
 
 اینجا GC وارد می‌شود: به‌صورتِ دوره‌ای، حلقه‌های ارجاعیِ غیرقابل‌دسترس را پیدا و آزاد می‌کند. تفاوت: شمارشِ ارجاع **فوری** است اما حلقه‌ها را نمی‌گیرد؛ GC **دوره‌ای** است و حلقه‌ها را می‌گیرد.
 
 ```python
 import gc
-gc.collect()       # فراخوانیِ دستیِ GC (به‌ندرت لازم است)
+gc.collect()       # manual GC call (rarely needed)
 ```
 
 ### __del__ و چرا تقریباً هیچ‌کس از آن استفاده نمی‌کند
@@ -113,10 +113,10 @@ gc.collect()       # فراخوانیِ دستیِ GC (به‌ندرت لازم 
 ```python
 class Resource:
     def __del__(self):
-        print("آزاد شد")     # کِی؟ معلوم نیست!
+        print("released")     # when? unknown!
 
 r = Resource()
-del r                        # شاید همین‌جا، شاید بعداً
+del r                        # maybe here, maybe later
 ```
 
 چرا از آن پرهیز می‌شود؟ **اول**، زمانِ دقیقِ اجرایش تضمین نیست (به‌خصوص با حلقه‌های ارجاعی یا هنگامِ خروجِ برنامه). **دوم**، اگر داخلش خطا رخ دهد، بی‌سروصدا نادیده گرفته می‌شود. **سوم**، می‌تواند حلقه‌های ارجاعی را برای GC پیچیده کند.
@@ -130,11 +130,11 @@ del r                        # شاید همین‌جا، شاید بعداً
 ```python
 a = 256
 b = 256
-print(a is b)      # True — پایتون اعداد کوچک را کش می‌کند (Flyweight داخلی)
+print(a is b)      # True — Python caches small integers (built-in Flyweight)
 
 x = 1000
 y = 1000
-print(x is y)      # ممکن است False — اعداد بزرگ کش نمی‌شوند
+print(x is y)      # may be False — large integers are not cached
 ```
 
 پیاده‌سازیِ دستیِ Flyweight برای اشیای سنگین:
@@ -147,15 +147,15 @@ class Color:
         if name not in cls._cache:
             instance = super().__new__(cls)
             instance.name = name
-            cls._cache[name] = instance      # بازاستفاده به‌جای ساختِ دوباره
+            cls._cache[name] = instance      # reuse instead of building again
         return cls._cache[name]
 
-red1 = Color("قرمز")
-red2 = Color("قرمز")
-print(red1 is red2)      # True — همان شیء، نه دو نمونه
+red1 = Color("red")
+red2 = Color("red")
+print(red1 is red2)      # True — the same object, not two instances
 ```
 
-اینجا `__new__` (که در فصل سوم دیدیم) به کار می‌آید: کنترلِ اینکه شیءِ تازه بسازیم یا موجود را برگردانیم.
+اینجا `__new__` (که در فصل دوم دیدیم) به کار می‌آید: کنترلِ اینکه شیءِ تازه بسازیم یا موجود را برگردانیم.
 
 ---
 
@@ -174,7 +174,7 @@ class PointNormal:
         self.y = y
 
 class PointSlots:
-    __slots__ = ("x", "y")       # attributeها از پیش اعلام شده‌اند
+    __slots__ = ("x", "y")       # attributes are declared in advance
     def __init__(self, x, y):
         self.x = x
         self.y = y
@@ -182,8 +182,8 @@ class PointSlots:
 import sys
 p1 = PointNormal(1, 2)
 p2 = PointSlots(1, 2)
-print(hasattr(p1, "__dict__"))   # True — دیکشنری دارد
-print(hasattr(p2, "__dict__"))   # False — ندارد، فشرده‌تر
+print(hasattr(p1, "__dict__"))   # True — it has a dictionary
+print(hasattr(p2, "__dict__"))   # False — it doesn't, more compact
 ```
 
 در ساختِ میلیون‌ها شیء، `__slots__` می‌تواند مصرفِ حافظه را چشمگیر کاهش دهد (اغلب ۳۰ تا ۵۰ درصد).
@@ -194,7 +194,7 @@ print(hasattr(p2, "__dict__"))   # False — ندارد، فشرده‌تر
 
 ```python
 p = PointSlots(1, 2)
-# p.z = 3      # AttributeError — z در __slots__ نیست
+# p.z = 3      # AttributeError — z is not in __slots__
 ```
 
 ### چه زمانی از __slots__ استفاده نکنیم؟
@@ -213,7 +213,7 @@ p = PointSlots(1, 2)
 
 ```python
 class Temperature:
-    __slots__ = ("_celsius",)        # slot با نام داخلی
+    __slots__ = ("_celsius",)        # slot with an internal name
 
     def __init__(self, c):
         self._celsius = c
@@ -239,10 +239,10 @@ class Data:
         self.value = value
 
 d = Data(42)
-weak = weakref.ref(d)          # ارجاعِ ضعیف
-print(weak())                  # <__main__.Data ...> — هنوز زنده است
-del d                          # تنها ارجاعِ قوی حذف شد
-print(weak())                  # None — شیء آزاد شد
+weak = weakref.ref(d)          # weak reference
+print(weak())                  # <__main__.Data ...> — still alive
+del d                          # the only strong reference was removed
+print(weak())                  # None — the object was freed
 ```
 
 ### کاربرد: Cache و Observer
@@ -254,7 +254,7 @@ import weakref
 
 class ImageCache:
     def __init__(self):
-        self._cache = weakref.WeakValueDictionary()   # مقادیرِ ضعیف
+        self._cache = weakref.WeakValueDictionary()   # weak values
 
     def get(self, key):
         return self._cache.get(key)
@@ -277,14 +277,14 @@ class ImageCache:
 
 ```python
 class Node:
-    __slots__ = ("value", "__weakref__")     # __weakref__ لازم است
+    __slots__ = ("value", "__weakref__")     # __weakref__ is required
 
     def __init__(self, value):
         self.value = value
 
 n = Node(1)
 import weakref
-w = weakref.ref(n)      # حالا کار می‌کند
+w = weakref.ref(n)      # now it works
 print(w().value)        # 1
 ```
 
@@ -306,16 +306,16 @@ class Order:
     def __init__(self, items):
         self.items = items
 
-original = Order(["کتاب", "قلم"])
+original = Order(["Book", "pen"])
 
 shallow = copy.copy(original)
-shallow.items.append("دفتر")
-print(original.items)      # ['کتاب', 'قلم', 'دفتر'] — لیست مشترک است!
+shallow.items.append("notebook")
+print(original.items)      # ['Book', 'pen', 'notebook'] — the list is shared!
 
-original2 = Order(["کتاب", "قلم"])
+original2 = Order(["Book", "pen"])
 deep = copy.deepcopy(original2)
-deep.items.append("دفتر")
-print(original2.items)     # ['کتاب', 'قلم'] — مستقل، بدون اثر
+deep.items.append("notebook")
+print(original2.items)     # ['Book', 'pen'] — independent, no effect
 ```
 
 کپیِ سطحی، لیستِ `items` را کپی نکرد؛ فقط ارجاعش را کپی کرد. کپیِ عمیق، لیستِ مستقل ساخت.
@@ -333,11 +333,11 @@ class Connection:
         self.cache = cache
 
     def __copy__(self):
-        # کپیِ سطحیِ سفارشی
+        # custom shallow copy
         return Connection(self.host, self.cache)
 
     def __deepcopy__(self, memo):
-        # کپیِ عمیقِ سفارشی
+        # custom deep copy
         return Connection(self.host, copy.deepcopy(self.cache, memo))
 ```
 

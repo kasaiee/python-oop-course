@@ -45,16 +45,16 @@ class StripeGateway(PaymentGateway):
     def refund(self, amount):
         return f"Stripe refund: {amount}"
 
-s = StripeGateway()      # کار می‌کند
+s = StripeGateway()      # works
 print(s.pay(100))        # Stripe: 100
 
-# اگر زیرکلاسی متدی را پیاده نکند:
+# if a subclass does not implement a method:
 class BrokenGateway(PaymentGateway):
     def pay(self, amount):
         return "..."
-    # refund پیاده نشده!
+    # refund not implemented!
 
-# BrokenGateway()   # TypeError هنگامِ ساخت — نه هنگام فراخوانیِ refund
+# BrokenGateway()   # TypeError at construction — not when calling refund
 ```
 
 نکته‌ی کلیدی: خودِ `PaymentGateway` را نمی‌توان نمونه‌سازی کرد (`PaymentGateway()` خطا می‌دهد)، و هر زیرکلاسی که همه‌ی متدهای انتزاعی را پیاده نکند، همان لحظه‌ی ساختِ شیء خطا می‌دهد. این «شکستِ زودهنگام» ارزشمند است.
@@ -79,20 +79,20 @@ from typing import Protocol
 class Drawable(Protocol):
     def draw(self) -> str: ...
 
-# این کلاس‌ها از Drawable ارث نمی‌برند، اما ساختارش را دارند
+# these classes don't inherit from Drawable, but they have its structure
 class Button:
     def draw(self) -> str:
-        return "[دکمه]"
+        return "[button]"
 
 class Icon:
     def draw(self) -> str:
-        return "(آیکون)"
+        return "(icon)"
 
-def render(item: Drawable) -> str:      # هر چیزی که draw دارد قبول است
+def render(item: Drawable) -> str:      # anything that has draw is accepted
     return item.draw()
 
-print(render(Button()))   # [دکمه]
-print(render(Icon()))     # (آیکون)
+print(render(Button()))   # [button]
+print(render(Icon()))     # (icon)
 ```
 
 `Button` و `Icon` هیچ ارث‌بریِ مشترکی ندارند، اما هر دو `Drawable` را برآورده می‌کنند چون متدِ `draw` را دارند. ابزارهای تایپ‌چک (مثل mypy) این را می‌فهمند و اگر شیئی بدونِ `draw` پاس دهید، **پیش از اجرا** هشدار می‌دهند.
@@ -123,10 +123,10 @@ class Closeable(Protocol):
 
 class Connection:
     def close(self) -> None:
-        print("بسته شد")
+        print("closed")
 
 conn = Connection()
-print(isinstance(conn, Closeable))   # True — بدون ارث‌بری!
+print(isinstance(conn, Closeable))   # True — without inheritance!
 ```
 
 **Tradeoff:** `isinstance` روی Protocolِ runtime فقط **وجودِ** متدها را چک می‌کند، نه امضا یا رفتارشان را. پس صددرصد امن نیست. برای بررسیِ دقیق، به تایپ‌چکِ ایستا (mypy) تکیه کنید.
@@ -151,7 +151,7 @@ print(isinstance(conn, Closeable))   # True — بدون ارث‌بری!
 ```python
 from typing import TypeVar, Generic
 
-T = TypeVar("T")                     # یک نوعِ پارامتری
+T = TypeVar("T")                     # a parametric type
 
 class Repository(Generic[T]):
     def __init__(self):
@@ -166,11 +166,11 @@ class Repository(Generic[T]):
 class User: ...
 class Product: ...
 
-user_repo: Repository[User] = Repository()     # مخزنِ کاربر
-product_repo: Repository[Product] = Repository()  # مخزنِ محصول
+user_repo: Repository[User] = Repository()     # user repository
+product_repo: Repository[Product] = Repository()  # product repository
 
 user_repo.add(User())
-u = user_repo.get(0)    # تایپ‌چکر می‌داند u یک User است، نه Any
+u = user_repo.get(0)    # the type checker knows u is a User, not Any
 ```
 
 مزیت: یک کلاسِ `Repository` نوشتیم که با هر نوعی کار می‌کند، اما ایمنیِ نوع حفظ می‌شود. `user_repo.get(0)` را تایپ‌چکر به‌عنوان `User` می‌شناسد و اگر اشتباهی محصول اضافه کنید، هشدار می‌دهد.
@@ -185,13 +185,13 @@ from typing import TypeVar
 class Comparable:
     def compare(self, other) -> int: ...
 
-# T فقط می‌تواند Comparable یا زیرکلاس‌هایش باشد
+# T can only be Comparable or its subclasses
 T = TypeVar("T", bound=Comparable)
 
 def find_max(items: list[T]) -> T:
     result = items[0]
     for item in items[1:]:
-        if item.compare(result) > 0:    # چون bound داریم، compare مجاز است
+        if item.compare(result) > 0:    # because we have a bound, compare is allowed
             result = item
     return result
 ```
@@ -213,8 +213,8 @@ class Pair(Generic[K, V]):
         self.key = key
         self.value = value
 
-p: Pair[str, int] = Pair("سن", 30)
-# تایپ‌چکر می‌داند p.key یک str و p.value یک int است
+p: Pair[str, int] = Pair("age", 30)
+# the type checker knows p.key is a str and p.value is an int
 ```
 
 ---
@@ -228,17 +228,17 @@ p: Pair[str, int] = Pair("سن", 30)
 ```python
 from typing import Optional, Union
 
-def find_user(id: int) -> Optional[str]:      # str یا None
+def find_user(id: int) -> Optional[str]:      # str or None
     return "ali" if id == 1 else None
 
-def parse(x: Union[int, str]) -> int:         # int یا str
+def parse(x: Union[int, str]) -> int:         # int or str
     return int(x)
 
-# از پایتون ۳.۱۰، سینتکسِ | جایگزینِ مدرن‌تر است:
-def find_user_v2(id: int) -> str | None:      # معادلِ Optional[str]
+# since Python 3.10, the | syntax is the more modern alternative:
+def find_user_v2(id: int) -> str | None:      # equivalent to Optional[str]
     return "ali" if id == 1 else None
 
-def parse_v2(x: int | str) -> int:            # معادلِ Union[int, str]
+def parse_v2(x: int | str) -> int:            # equivalent to Union[int, str]
     return int(x)
 ```
 
@@ -251,8 +251,8 @@ def parse_v2(x: int | str) -> int:            # معادلِ Union[int, str]
 ```python
 from typing import Any
 
-def process(data: Any):      # تایپ‌چکر دیگر هیچ چیزی را بررسی نمی‌کند
-    return data.anything()   # هشدار نمی‌دهد، حتی اگر غلط باشد
+def process(data: Any):      # the type checker no longer checks anything
+    return data.anything()   # gives no warning, even if it's wrong
 ```
 
 `Any` را فقط وقتی به کار ببرید که واقعاً نوع نامشخص است (مثلاً داده‌ی خامِ JSON). استفاده‌ی بی‌رویه‌اش، کلِ فایده‌ی تایپ‌هینت را از بین می‌برد. اغلب `object` یا یک Protocol، انتخابِ امن‌تری است.
@@ -267,7 +267,7 @@ from typing import TypeAlias
 UserId: TypeAlias = int
 ConnectionOptions: TypeAlias = dict[str, str | int]
 
-def get_user(uid: UserId) -> str: ...     # خواناتر از int خالی
+def get_user(uid: UserId) -> str: ...     # more readable than a bare int
 ```
 
 ### @overload
@@ -282,11 +282,11 @@ def double(x: int) -> int: ...
 @overload
 def double(x: str) -> str: ...
 
-def double(x):                    # پیاده‌سازیِ واقعی
+def double(x):                    # the real implementation
     return x * 2
 
-r1 = double(5)      # تایپ‌چکر می‌داند int است → 10
-r2 = double("ab")   # تایپ‌چکر می‌داند str است → "abab"
+r1 = double(5)      # the type checker knows it's int → 10
+r2 = double("ab")   # the type checker knows it's str → "abab"
 ```
 
 `@overload` فقط برای تایپ‌چکر است؛ در زمان اجرا فقط پیاده‌سازیِ آخر اجرا می‌شود.
@@ -302,7 +302,7 @@ r2 = double("ab")   # تایپ‌چکر می‌داند str است → "abab"
 ```python
 from typing import Iterable
 
-def total(numbers: Iterable[int]) -> int:    # list، tuple، set، generator... همه قبول
+def total(numbers: Iterable[int]) -> int:    # list, tuple, set, generator... all accepted
     return sum(numbers)
 
 print(total([1, 2, 3]))       # list
@@ -324,7 +324,7 @@ def is_str_list(val: list[object]) -> TypeGuard[list[str]]:
 
 def process(items: list[object]):
     if is_str_list(items):
-        # اینجا تایپ‌چکر می‌داند items یک list[str] است
+        # here the type checker knows items is a list[str]
         print(" ".join(items))
 ```
 
