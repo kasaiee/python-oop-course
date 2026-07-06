@@ -271,6 +271,75 @@ points = {Point(1, 2), Point(1, 2)}
 print(len(points))   # 1 — because they are equal and have the same hash
 ```
 
+### عملگرها را به خدمت بگیرید: __add__ و دوستانش
+
+حالا که `==` را رام کردیم، سراغِ بقیه‌ی عملگرها برویم. فرض کنید در سیستمِ صورت‌حساب با پول کار می‌کنید. جمع‌زدنِ مبلغ‌ها با متد، خوانا نیست: `total.add(price).add(tax)`. چقدر بهتر که خودِ `+` کار کند — و پایتون اجازه می‌دهد:
+
+```python
+class Money:
+    def __init__(self, amount, currency="IRR"):
+        self.amount = amount
+        self.currency = currency
+
+    def __repr__(self):
+        return f"Money({self.amount:,} {self.currency})"
+
+    def __add__(self, other):                 # self + other
+        if isinstance(other, Money):
+            if other.currency != self.currency:
+                raise ValueError("cannot add different currencies")
+            return Money(self.amount + other.amount, self.currency)
+        if isinstance(other, int):            # Money + 1000 also makes sense
+            return Money(self.amount + other, self.currency)
+        return NotImplemented                 # "I don't know this type"
+
+    def __radd__(self, other):                # other + self (when other fails first)
+        return self.__add__(other)
+
+    def __mul__(self, factor):                # Money * 3
+        if isinstance(factor, int):
+            return Money(self.amount * factor, self.currency)
+        return NotImplemented
+
+price = Money(500_000)
+tax = Money(45_000)
+print(price + tax)          # Money(545,000 IRR)
+print(price + 5_000)        # Money(505,000 IRR)   ← __add__ with int
+print(5_000 + price)        # Money(505,000 IRR)   ← __radd__ saved us
+print(price * 3)            # Money(1,500,000 IRR)
+print(sum([price, tax], Money(0)))   # Money(545,000 IRR) — even sum() works now
+```
+
+سه نکته‌ی حرفه‌ای در این کد هست که در بیشترِ آموزش‌ها پیدایش نمی‌کنید:
+
+**`NotImplemented` (نه `NotImplementedError`!)** یک مقدارِ ویژه است، نه استثنا. وقتی برمی‌گردانیدش، دارید مؤدبانه به پایتون می‌گویید «من با این نوع آشنا نیستم» — و پایتون به‌جای شکست، **شانس را به طرفِ مقابل می‌دهد**. اگر او هم بلد نبود، آن‌وقت `TypeError` می‌آید. اگر به‌جایش استثنا پرت می‌کردید، این مذاکره‌ی دوطرفه را می‌کشتید.
+
+**`__radd__` همان شانسِ دوم است:** در `5_000 + price`، پایتون اول `int.__add__(5000, price)` را امتحان می‌کند که `Money` را نمی‌شناسد و `NotImplemented` می‌دهد؛ بعد نوبتِ `price.__radd__(5000)` می‌رسد. بدونِ `__radd__`، جمعِ ما فقط یک‌طرفه کار می‌کرد — باگی که معمولاً اولین‌بار در `sum()` خودش را نشان می‌دهد، چون `sum` از صفرِ عددی شروع می‌کند.
+
+**عملگرِ جدید، شیءِ جدید:** `__add__` ما `Money` تازه می‌سازد و self را دست نمی‌زند — مثل خودِ اعداد و رشته‌های پایتون. اگر بخواهید `+=` درجا (in-place) عمل کند، `__iadd__` را جدا تعریف می‌کنید؛ برای اشیای تغییرناپذیرِ منطقی مثل پول، همین ساختِ نسخه‌ی جدید درست‌تر است.
+
+برای مقایسه‌ها (`<`، `>=`، ...) هم می‌شود شش متد نوشت — اما لازم نیست. `functools.total_ordering` با داشتنِ `__eq__` و فقط یکی از مقایسه‌ها، بقیه را خودش می‌سازد:
+
+```python
+from functools import total_ordering
+
+@total_ordering
+class Version:
+    def __init__(self, major, minor):
+        self.major, self.minor = major, minor
+
+    def __eq__(self, other):
+        return (self.major, self.minor) == (other.major, other.minor)
+
+    def __lt__(self, other):
+        return (self.major, self.minor) < (other.major, other.minor)
+
+print(Version(3, 10) > Version(3, 9))    # True — we never wrote __gt__!
+print(Version(2, 0) >= Version(2, 0))    # True — nor __ge__
+```
+
+**Tradeoff:** عملگرها فقط وقتی تعریف کنید که معنایشان برای خواننده **بدیهی** باشد. `Money + Money` بدیهی است؛ اما `User + User` یعنی چه؟ ازدواج؟ ادغامِ حساب؟ عملگرِ مبهم از متدِ بدنام هم بدتر است، چون ظاهرش ساده و رفتارش غافلگیرکننده است.
+
 ### __bool__
 
 تعیین می‌کند شیء در شرط‌ها True است یا False:
@@ -352,7 +421,47 @@ for n in Countdown(3):
     print(n)     # 3, 2, 1
 ```
 
-تفaوت با `__getitem__`: `__getitem__` برای دسترسیِ ایندکسی است؛ پروتکل iterator (`__iter__`/`__next__`) برای پیمایشِ کنترل‌شده و بالقوه بی‌پایان یا محاسبه‌شونده مناسب‌تر است.
+تفاوت با `__getitem__`: `__getitem__` برای دسترسیِ ایندکسی است؛ پروتکل iterator (`__iter__`/`__next__`) برای پیمایشِ کنترل‌شده و بالقوه بی‌پایان یا محاسبه‌شونده مناسب‌تر است.
+
+### میان‌بُر پایتونی: جنریتور به‌جای کلاس Iterator
+
+حالا که زحمتِ `Countdown` را کشیدیم، بگذارید رازی را بگویم: در کدِ حرفه‌ایِ پایتون، به‌ندرت کسی کلاسِ iterator دستی می‌نویسد. کلیدواژه‌ی `yield` همان پروتکل را **خودکار** پیاده می‌کند:
+
+```python
+def countdown(start):
+    while start > 0:
+        yield start          # pause here, hand the value out, resume later
+        start -= 1
+
+for n in countdown(3):
+    print(n)                 # 3, 2, 1 — identical behavior, three lines
+```
+
+تابعی که `yield` دارد، **جنریتور** است: با هر فراخوانی، شیئی برمی‌گرداند که `__iter__` و `__next__` را از قبل دارد. اجرایش «قابلِ توقف» است — به `yield` که می‌رسد مقدار را تحویل می‌دهد و منجمد می‌شود تا مقدارِ بعدی خواسته شود. حالتِ بینِ مراحل (متغیرِ `start`) هم به‌جای attributeهای دستی، در خودِ متغیرهای محلیِ تابع زنده می‌ماند.
+
+این میان‌بُر داخلِ کلاس‌ها هم درخشان است. `__iter__` می‌تواند خودش یک جنریتور باشد:
+
+```python
+class OrderHistory:
+    def __init__(self):
+        self._orders = []
+
+    def add(self, order_id, amount):
+        self._orders.append((order_id, amount))
+
+    def __iter__(self):
+        for order_id, amount in self._orders:
+            if amount > 0:               # filtering logic, cleanly inline
+                yield order_id
+
+history = OrderHistory()
+history.add(1, 90_000)
+history.add(2, 0)          # a cancelled order
+history.add(3, 45_000)
+print(list(history))       # [1, 3] — for/list/in all work, no __next__ in sight
+```
+
+**قاعده‌ی انتخاب:** کلاسِ iterator دستی وقتی می‌ارزد که پیمایش، خودش یک موجودیتِ کامل با چند متد و حالتِ قابلِ‌بازرسی باشد (مثلاً iterator ی که بشود pause/resume/skipش کرد). برای بقیه‌ی موارد — یعنی تقریباً همیشه — `yield` کوتاه‌تر، خواناتر و کم‌خطاتر است. این را در فصل دوازدهم دوباره می‌بینید: خیلی از الگوهای کلاسیک، در پایتون میان‌بُرِ زبانی دارند.
 
 ### Context Manager: __enter__ و __exit__
 
@@ -457,7 +566,7 @@ p = Product(100, 5)
 # Product(-1, 5)   # ValueError: must be positive
 ```
 
-مزیت نسبت به property: منطق `Positive` یک‌بار نوشته شد و روی `price` و `weight` (و هر تعدادِ دیگر) اعمال شد، بی‌تکرار. Descriptorها پیشرفته‌اند و در فصل سیزدهم (متاکلاس‌ها) دوباره سراغشان می‌رویم.
+مزیت نسبت به property: منطق `Positive` یک‌بار نوشته شد و روی `price` و `weight` (و هر تعدادِ دیگر) اعمال شد، بی‌تکرار. Descriptorها آن‌قدر مهم‌اند که در فصل پانزدهم یک فصلِ کامل برایشان داریم.
 
 ---
 
@@ -490,6 +599,18 @@ p = Product(100, 5)
 ```
 
 **نکته‌ی طلایی:** متدهای جادویی وسوسه‌انگیزند، اما همه را لازم ندارید. فقط آن‌هایی را پیاده کنید که واقعاً به یکپارچگیِ کلاس با زبان کمک می‌کنند. یک کلاسِ ساده که فقط `__repr__` دارد، بهتر از کلاسی است که ده متد جادویی دارد که هیچ‌کدام لازم نبوده‌اند.
+
+---
+
+## پرسش‌های مصاحبه
+
+**۱. «فرق classmethod و staticmethod؟ هرکدام کِی؟»** — `classmethod` کلاس (`cls`) را می‌گیرد → سازنده‌های جایگزین (`from_dict`) و کارهایی که به خودِ کلاس ربط دارند و با ارث‌بری درست رفتار می‌کنند؛ `staticmethod` هیچ‌چیز نمی‌گیرد → تابعِ کمکیِ مرتبط که فقط از نظرِ موضوعی به کلاس چسبیده. جوابِ ممتاز: «اگر staticmethod به هیچ‌چیزِ کلاس دست نمی‌زند، شاید اصلاً باید یک تابعِ سطحِ ماژول باشد.»
+
+**۲. «__str__ و __repr__ چه فرقی دارند؟»** — `__str__` برای انسان (خروجیِ `print`)، `__repr__` برای برنامه‌نویس (دیباگ، REPL؛ ترجیحاً بازتولیدکننده‌ی شیء). قاعده‌ی حرفه‌ای: `__repr__` را همیشه بنویسید — اگر `__str__` نباشد، به `__repr__` عقب‌گرد می‌شود، پس یک تیر و دو نشان.
+
+**۳. «قراردادِ __eq__ و __hash__ چیست؟»** — دو شیءِ برابر (`__eq__`) باید hashِ یکسان داشته باشند، وگرنه `set` و `dict` رفتارِ غیرقابلِ‌پیش‌بینی پیدا می‌کنند؛ و تعریفِ `__eq__` به‌تنهایی، شیء را unhashable می‌کند. اشاره به اینکه اشیای تغییرپذیر بهتر است hashable نباشند، عمقِ جواب را نشان می‌دهد.
+
+**۴. «context manager چطور کار می‌کند و چرا از try/finally بهتر است؟»** — پروتکلِ `__enter__`/`__exit__`؛ `with` تضمین می‌کند `__exit__` حتی هنگامِ استثنا اجرا شود. بهتر است چون الگوی «باز کن، مطمئن ببند» را یک‌بار در خودِ کلاس کپسوله می‌کند نه در تک‌تکِ محل‌های استفاده. اگر مقدارِ برگشتیِ `__exit__` (بلعیدن یا عبورِ استثنا) را هم بگویید، سوالِ بعدی را پیش‌خور کرده‌اید.
 
 ---
 
