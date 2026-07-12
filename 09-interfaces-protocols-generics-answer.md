@@ -93,3 +93,98 @@ u = user_repo.get(0)      # the type checker knows u is a User, not Any
 ABC را وقتی نگه دارید که واقعاً می‌خواهید یک خانواده‌ی تحتِ کنترلِ خودتان را با ارث‌بری و بررسیِ هنگامِ ساخت، به قرارداد ملزم کنید.
 
 **۱۶.** این جمله **نادرست** است. تایپ‌هینترها در زمانِ اجرا **اجرا نمی‌شوند** و هیچ بررسیِ خودکاری انجام نمی‌دهند؛ پایتون آن‌ها را عملاً نادیده می‌گیرد. ارزشِ واقعی‌شان در **ابزارهای تایپ‌چکِ ایستا** (مثلِ mypy یا Pyright) است که کد را **پیش از اجرا** تحلیل می‌کنند و باگ‌های نوع را می‌گیرند. بدونِ چنین ابزاری، تایپ‌هینت فقط یک **مستندسازیِ** خوانا برای برنامه‌نویس است (که آن هم بی‌ارزش نیست، اما «امنیتِ زمانِ اجرا» نیست). اگر ایمنیِ واقعیِ زمانِ اجرا می‌خواهید، باید صریحاً اعتبارسنجی کنید (مثلاً با `isinstance` یا کتابخانه‌هایی مثل Pydantic).
+
+---
+
+## بخش و: از قرارداد تا کد
+
+**۱۷.**
+
+```python
+from typing import Protocol, Iterable
+
+class Exportable(Protocol):
+    def export(self) -> str: ...
+
+class Invoice:                          # no inheritance — just the right shape
+    def __init__(self, number: int):
+        self.number = number
+    def export(self) -> str:
+        return f"invoice #{self.number}"
+
+class Report:
+    def export(self) -> str:
+        return "monthly report"
+
+def export_all(items: Iterable[Exportable]) -> list[str]:
+    return [item.export() for item in items]
+
+print(export_all([Invoice(101), Report()]))
+# ['invoice #101', 'monthly report']
+```
+
+نکته: `Iterable[Exportable]` به‌جای `list[Exportable]` — کمترین قابلیتِ لازم را بخواه (همان درسِ بخشِ د).
+
+**۱۸.**
+
+```python
+from abc import ABC, abstractmethod
+
+class PaymentProvider(ABC):
+    def pay(self, amount):                  # shared validation lives here
+        if amount <= 0:
+            raise ValueError("amount must be positive")
+        return self._do_pay(amount)
+
+    @abstractmethod
+    def _do_pay(self, amount): ...          # the hook subclasses must fill
+
+class WalletProvider(PaymentProvider):
+    def _do_pay(self, amount):
+        return f"wallet paid {amount}"
+
+print(WalletProvider().pay(10_000))         # wallet paid 10000
+
+class Broken(PaymentProvider):              # forgot _do_pay
+    pass
+
+try:
+    Broken()
+except TypeError as e:
+    print(type(e).__name__)                 # TypeError — at construction time
+```
+
+این همان Template Method فصل دوازدهم است که با ABC رسمی شده: اعتبارسنجی یک‌بار در والد، جزئیات در زیرکلاس.
+
+**۱۹.**
+
+```python
+from typing import TypeVar, Generic
+
+T = TypeVar("T")
+
+class Stack(Generic[T]):
+    def __init__(self) -> None:
+        self._items: list[T] = []
+
+    def push(self, item: T) -> None:
+        self._items.append(item)
+
+    def pop(self) -> T:
+        return self._items.pop()
+
+    def peek(self) -> T:
+        return self._items[-1]
+
+numbers: Stack[int] = Stack()
+numbers.push(10)
+words: Stack[str] = Stack()
+words.push("hello")
+
+print(numbers.pop() + 5)        # 15 — the checker knows this is int
+print(words.pop().upper())      # HELLO — and this is str
+```
+
+type checker برای `numbers.pop()` نوعِ `int` و برای `words.pop()` نوعِ `str` را می‌داند؛ پس `numbers.pop().upper()` را **قبل از اجرا** خطا می‌گیرد. بدونِ Generic، خروجیِ هر دو `Any` بود و checker عملاً خاموش.
+
+**۲۰.** **Protocol** — به دو دلیل: اول، کلاس‌های کتابخانه‌ی بیرونی نمی‌توانند از ABCِ شما ارث ببرند (کدشان دستِ شما نیست)، اما اگر متدِ `send` را داشته باشند، بدونِ هیچ تغییری با Protocol می‌گنجند؛ قراردادِ ساختاری دقیقاً برای «مرز با کدِ غریبه» ساخته شده. دوم، وابستگیِ کدتان به کتابخانه یک‌طرفه می‌ماند. `@runtime_checkable` فقط **وجودِ** متدها/attributeهای اعلام‌شده را در `isinstance` بررسی می‌کند — نه امضا، نه نوعِ پارامترها، نه نوعِ خروجی. یعنی کلاسی با `send(self)` بدونِ پارامتر هم از `isinstance` رد می‌شود ولی در عمل می‌شکند؛ بررسیِ کاملِ امضا کارِ type checkerِ ایستا (mypy/pyright) است، نه زمانِ اجرا.

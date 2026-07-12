@@ -148,3 +148,77 @@ print(c2.items)      # []
 - بعضی ابزارها و کتابخانه‌ها به `__dict__` تکیه می‌کنند و با `__slots__` می‌شکنند.
 
 پاسخِ درست: `__slots__` را فقط وقتی به کار ببرید که **اندازه‌گیری** نشان دهد حافظه گلوگاه است و تعدادِ اشیاء بسیار زیاد و attributeها ثابت‌اند. اول کدِ درست و خوانا؛ بهینه‌سازی فقط هنگامِ نیازِ اثبات‌شده. این همان تفکرِ Tradeoff است.
+
+---
+
+## بخش و: در عمق حافظه
+
+**۱۷.**
+
+```
+True
+```
+
+`a.partner = b` و `b.partner = a` یک **چرخه‌ی ارجاع** ساخته‌اند. بعد از `del a` و `del b` نام‌های بیرونی از بین می‌روند، اما شمارنده‌ی ارجاعِ هیچ‌کدام صفر نمی‌شود — هر کدام هنوز از داخلِ دیگری ارجاع دارد. Reference Counting اینجا بن‌بست است؛ این دقیقاً کاری است که Garbage Collectorِ چرخه‌یاب برایش وجود دارد: `gc.collect()` چرخه‌ی دورافتاده را پیدا و آزاد می‌کند و تعدادِ اشیای جمع‌شده را برمی‌گرداند (`found > 0`). در برنامه‌ی عادی لازم نیست دستی صدایش بزنید؛ خودش دوره‌ای اجرا می‌شود.
+
+**۱۸.**
+
+```python
+import weakref
+
+class Session:
+    def __init__(self, user):
+        self.user = user
+
+class SessionCache:
+    def __init__(self):
+        self._store = weakref.WeakValueDictionary()
+
+    def put(self, key, session):
+        self._store[key] = session      # weak reference — does not keep it alive
+
+    def get(self, key):
+        return self._store.get(key)    # None if the session has died
+
+cache = SessionCache()
+s = Session("ali")                      # a strong reference lives here
+cache.put("abc", s)
+
+print(cache.get("abc").user)            # ali — served from cache
+del s                                   # the only strong reference dies
+print(cache.get("abc"))                 # None — the key vanished by itself
+```
+
+این همان پادزهرِ «کشِ قبرستانی» است: کش نگه می‌دارد تا وقتی *کسِ دیگری* شیء را زنده می‌خواهد، و هرگز خودش دلیلِ زنده‌ماندن نمی‌شود.
+
+**۱۹.** خطِ آخر **خطا نمی‌دهد** و چاپ می‌شود: `surprise! {'name': 'origin', 'extra': 'surprise!'}`. قاعده: `__slots__` فقط وقتی `__dict__` را حذف می‌کند که **همه‌ی** زنجیره‌ی وراثت slots داشته باشند. `NamedPoint` چون `__slots__` تعریف نکرده، `__dict__` می‌گیرد؛ `x` و `y` همچنان در slotهای والد می‌نشینند اما `name` و هر attributeِ پویا در دیکشنری. نتیجه‌ی عملی: صرفه‌جوییِ حافظه برای نمونه‌های زیرکلاس عملاً از دست می‌رود (هر نمونه باز یک dict دارد). اگر هدفْ حفظِ صرفه‌جویی است، زیرکلاس هم باید `__slots__ = ("name",)` بگیرد — فقط فیلدهای *جدیدش*.
+
+**۲۰.**
+
+```python
+import copy
+
+APP_SETTINGS = {"theme": "dark", "autosave": True}   # one shared config
+
+class Document:
+    def __init__(self, content, settings):
+        self.content = content          # deep-copy me
+        self.settings = settings        # share me — do NOT copy
+
+    def __deepcopy__(self, memo):
+        cloned = Document(
+            copy.deepcopy(self.content, memo),   # truly copied
+            self.settings,                        # intentionally shared
+        )
+        memo[id(self)] = cloned
+        return cloned
+
+doc = Document(["intro", "body"], APP_SETTINGS)
+clone = copy.deepcopy(doc)
+
+clone.content.append("appendix")
+print(doc.content)                      # ['intro', 'body'] — original untouched
+print(clone.settings is doc.settings)   # True — settings deliberately shared
+```
+
+**راهِ دیگر:** اگر فیلدهای «کپی‌نشدنی» زیاد شوند، الگوی تمیزتر این است که در `__deepcopy__` از `self.__class__.__new__` بسازید و روی `__dict__` حلقه بزنید و فقط فیلدهای عضوِ یک مجموعه‌ی `_SHARED` را بدونِ کپی عبور دهید — سیاست یک‌جا اعلام می‌شود.

@@ -134,3 +134,84 @@ print(u.__dict__)      # {'username': 'ali'}
 3. **متاکلاس** — فقط اگر هیچ‌کدام کافی نبودند و نیاز به مداخله‌ی عمیق در ساختِ کلاس دارید.
 
 چرا نباید مستقیم سراغِ متاکلاس رفت: متاکلاس پیچیده است، خواندنش برای دیگران سخت است، و با ارث‌بریِ چندگانه می‌تواند تصادمِ متاکلاس بسازد. انتخابِ ساده‌ترین ابزارِ کافی، کد را خواناتر و قابل‌نگهداری‌تر می‌کند — و این خودش نشانه‌ی بلوغِ مهندسی است. قدرتِ خام (متاکلاس) را فقط وقتی خرج کنید که واقعاً لازم است.
+
+---
+
+## بخش و: متاکلاس در عمل
+
+**۱۵.**
+
+```
+creating class Base
+creating class Child
+--- now instantiating ---
+```
+
+دو خطِ اول هنگامِ **تعریفِ** کلاس‌ها چاپ می‌شوند — `Meta.__new__` زمانی اجرا می‌شود که خودِ کلاس ساخته می‌شود، و `Child` هم چون از `Base` ارث می‌برد، متاکلاسِ آن را به ارث برده (متاکلاس، برخلافِ دکوراتورِ کلاسی، به زیرکلاس‌ها منتقل می‌شود). بعد از خطِ جداکننده، نمونه‌سازی‌ها **هیچ چیزی چاپ نمی‌کنند**: ساختِ شیء از مسیرِ `Meta.__new__` نمی‌گذرد؛ آن متد فقط برای ساختِ *کلاس* بود. (نمونه‌سازی از `Meta.__call__` می‌گذرد که override نکرده‌ایم.)
+
+**۱۶.**
+
+```python
+class DocMeta(type):
+    def __new__(mcs, name, bases, namespace):
+        for attr, value in namespace.items():
+            if callable(value) and not attr.startswith("_"):
+                if not getattr(value, "__doc__", None):
+                    raise TypeError(f"public method '{name}.{attr}' needs a docstring")
+        return super().__new__(mcs, name, bases, namespace)
+
+class GoodService(metaclass=DocMeta):
+    def start(self):
+        """Start the service."""
+    def _internal(self):
+        pass                          # private — no docstring required
+
+print("GoodService created fine")
+
+try:
+    class BadService(metaclass=DocMeta):
+        def stop(self):
+            pass                      # public and undocumented!
+except TypeError as e:
+    print(e)                          # public method 'BadService.stop' needs a docstring
+```
+
+خطا در لحظه‌ی **تعریفِ** کلاس می‌ترکد، نه در اولین استفاده — همان فلسفه‌ی «شکستِ زودهنگام» که ABC هم دنبال می‌کند.
+
+**۱۷.**
+
+```python
+class SingletonMeta(type):
+    def __call__(cls, *args, **kwargs):
+        if not hasattr(cls, "_instance"):
+            cls._instance = super().__call__(*args, **kwargs)
+        return cls._instance
+
+class AppConfig(metaclass=SingletonMeta):
+    def __init__(self):
+        self.debug = False
+
+a = AppConfig()
+b = AppConfig()
+print(a is b)        # True — one instance, enforced by the metaclass
+```
+
+نقد: متاکلاس فقط **مکانیزم** را شیک‌تر کرده، نه **مشکل** را. این هنوز حالتِ سراسریِ پنهان است: تست‌ها به هم نشت می‌کنند (نمونه بینِ تست‌ها زنده می‌ماند)، وابستگی‌ها نامرئی‌اند و جایگزینی با بدل سخت است. تنها مزیتِ واقعی نسبت به `__new__`، تمیزتر بودنِ نقطه‌ی کنترل (`__call__`) و قابلِ‌استفاده‌بودن روی چند کلاس است — اما توصیه‌ی فصل ۱۲ سرِ جایش است: قبل از Singleton، به ماژول یا تزریقِ وابستگی فکر کنید.
+
+**۱۸.**
+
+```python
+class PluginBase:
+    registry = {}
+
+    def __init_subclass__(cls, **kwargs):
+        super().__init_subclass__(**kwargs)
+        PluginBase.registry[cls.__name__.lower()] = cls
+
+class EmailPlugin(PluginBase): ...
+class SmsPlugin(PluginBase): ...
+
+print(sorted(PluginBase.registry))    # ['emailplugin', 'smsplugin']
+```
+
+در code review نسخه‌ی `__init_subclass__` را تأیید می‌کنم. هر دو دقیقاً یک کار می‌کنند، اما: نسخه‌ی دوم کوتاه‌تر است، نیازی به شرطِ «خودِ پایه را رد کن» ندارد (`__init_subclass__` فقط برای زیرکلاس‌ها صدا می‌شود)، برای خواننده‌ی معمولی قابلِ‌فهم‌تر است، و با متاکلاس‌های دیگر (مثلاً ABCMeta) تداخل نمی‌کند — تداخلِ دو متاکلاس یکی از دردسرهای کلاسیک است. متاکلاس را برای کاری نگه می‌داریم که `__init_subclass__` از پسش برنیاید: دست‌کاریِ namespace *قبل از* ساختِ کلاس، یا کنترلِ نمونه‌سازی مثل تمرینِ ۱۷. قدرتِ بیشتر، بدونِ نیازِ بیشتر، فقط هزینه‌ی فهم اضافه می‌کند.

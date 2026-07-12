@@ -91,3 +91,50 @@ print(d.records)
 **۱۸.** این جمله را نقد کنید: «هر کلاسی باید تا حدِ ممکن متدهای جادویی زیادی پیاده کند تا حرفه‌ای‌تر و کامل‌تر به‌نظر برسد.»
 
 **۱۹.** نویسنده توصیه می‌کند «با attribute ساده شروع کن و فقط هنگامِ نیاز به property ارتقا بده» (اصلِ YAGNI). این توصیه چه تفاوتی با عادتِ «همیشه از ابتدا getter/setter بنویس» در جاوا دارد، و چرا این رویکرد در پایتون منطقی است؟
+
+---
+
+## بخش و: عملگرها و جنریتورها
+
+**۲۰.** تفاوتِ `return NotImplemented` با `raise NotImplementedError` چیست؟ «مذاکره‌ی دوطرفه»ی پایتون هنگامِ `a + b` را توضیح دهید و بگویید `__radd__` دقیقاً کجای این مذاکره وارد می‌شود.
+
+**۲۱.** با توجه به کلاسِ زیر، خروجی (یا خطای) هر سه خطِ آخر را پیش‌بینی کنید:
+
+```python
+class Money:
+    def __init__(self, amount):
+        self.amount = amount
+    def __repr__(self):
+        return f"Money({self.amount})"
+    def __add__(self, other):
+        if isinstance(other, Money):
+            return Money(self.amount + other.amount)
+        if isinstance(other, int):
+            return Money(self.amount + other)
+        return NotImplemented
+
+print(Money(2_000) + 500)
+print(500 + Money(2_000))
+print(sum([Money(100), Money(200)], Money(0)))
+```
+
+**۲۲. (کدنویسی)** کلاسِ `Duration` (مدت‌زمان بر حسبِ ثانیه) بنویسید با این قابلیت‌ها: جمعِ دو `Duration`، جمع با `int` (ثانیه) از **هر دو طرف**، مقایسه‌ی برابری، و `__repr__` خوانا مثل `Duration(90s)`. رفتارش را با `sum` روی یک لیست هم نشان دهید.
+
+**۲۳. (کدنویسی)** کلاسِ iterator زیر را به یک **جنریتور** سه‌چهارخطی تبدیل کنید؛ سپس در کلاسِ `Inventory` (که دیکشنریِ `name -> stock` دارد) متدِ `__iter__` را با جنریتور طوری بنویسید که فقط نامِ کالاهای موجود (`stock > 0`) را بدهد:
+
+```python
+class EvenNumbers:
+    def __init__(self, limit):
+        self.limit = limit
+        self.current = 0
+    def __iter__(self):
+        return self
+    def __next__(self):
+        if self.current > self.limit:
+            raise StopIteration
+        value = self.current
+        self.current += 2
+        return value
+```
+
+**۲۴. (تفکر انتقادی)** همکاری می‌گوید: «حالا که عملگرها را یاد گرفتیم، برای همه‌ی کلاس‌هایمان `__add__` و `__lt__` تعریف کنیم؛ کد کوتاه‌تر می‌شود.» این توصیه را نقد کنید: معیارِ درستِ تعریفِ عملگر چیست و عملگرِ مبهم چرا از متدِ بدنام خطرناک‌تر است؟ برای `User + User` دست‌کم دو تفسیرِ متناقض مثال بزنید.

@@ -224,3 +224,83 @@ def timer():
 قاعده‌ی درست (نکته‌ی طلاییِ فصل): فقط متدهایی را پیاده کنید که واقعاً به یکپارچگیِ کلاس با زبان کمک می‌کنند. یک کلاسِ ساده که فقط `__repr__` دارد، بهتر از کلاسی است که ده متدِ جادوییِ لازم‌نشده دارد.
 
 **۱۹.** در جاوا، چون تبدیلِ بعدیِ یک field عمومی به getter/setter کدِ کاربر را می‌شکند، برنامه‌نویسان **از ابتدا و همیشه** getter/setter می‌نویسند — حتی وقتی هیچ منطقی پشتشان نیست (احتیاطِ اجباری). در پایتون این احتیاط لازم نیست: چون هر وقت خواستید می‌توانید یک attribute ساده را **بدونِ شکستنِ کدِ کاربر** به property ارتقا دهید. پس منطقی است که با ساده‌ترین شکل (attribute عمومی) شروع کنید و فقط هنگامِ **نیازِ واقعی** به اعتبارسنجی/محاسبه/کنترل، property اضافه کنید. این همان اصلِ **YAGNI** («لازمش نخواهی داشت») است: پیچیدگی را تا لحظه‌ی نیاز به تعویق بیندازید. زبان به شما این آزادی را می‌دهد، پس از آن استفاده کنید.
+
+---
+
+## بخش و: عملگرها و جنریتورها
+
+**۲۰.** `NotImplemented` یک **مقدارِ** ویژه است که یعنی «من این ترکیب را بلد نیستم؛ نوبتِ طرفِ مقابل»؛ `NotImplementedError` یک **استثنا**ست که اجرای برنامه را می‌شکند و مذاکره را می‌کُشد. مذاکره‌ی `a + b`: اول `type(a).__add__(a, b)` امتحان می‌شود؛ اگر `NotImplemented` برگرداند، پایتون `type(b).__radd__(b, a)` را امتحان می‌کند؛ اگر آن هم بلد نبود، تازه `TypeError` می‌آید. `__radd__` همان «شانسِ دوم» است — بدونش، `500 + money` هرگز به کلاسِ شما نمی‌رسد.
+
+**۲۱.**
+
+```
+Money(2500)
+TypeError (unsupported operand type(s) for +: 'int' and 'Money')
+Money(300)
+```
+
+خطِ اول از `__add__` با `int` جواب می‌گیرد. خطِ دوم: `int.__add__` بلد نیست و چون `Money` متدِ `__radd__` **ندارد**، مذاکره شکست می‌خورد → `TypeError`. (و دقت کنید: اگر بلاک را یک‌جا اجرا کنید، برنامه همین‌جا متوقف می‌شود و به خطِ سوم اصلاً نمی‌رسد!) خطِ سوم — اگر جداگانه اجرایش کنید — کار می‌کند، چون `sum` را با مقدارِ شروعِ `Money(0)` صدا زدیم و همه‌ی جمع‌ها `Money + Money`اند. (اگر مقدارِ شروع نمی‌دادیم، `sum` از `0 + Money(100)` شروع می‌کرد و باز به همان `TypeError` می‌خوردیم.)
+
+**۲۲.**
+
+```python
+class Duration:
+    def __init__(self, seconds):
+        self.seconds = seconds
+
+    def __repr__(self):
+        return f"Duration({self.seconds}s)"
+
+    def __eq__(self, other):
+        if not isinstance(other, Duration):
+            return NotImplemented
+        return self.seconds == other.seconds
+
+    def __add__(self, other):
+        if isinstance(other, Duration):
+            return Duration(self.seconds + other.seconds)
+        if isinstance(other, int):
+            return Duration(self.seconds + other)
+        return NotImplemented
+
+    def __radd__(self, other):
+        return self.__add__(other)
+
+print(Duration(60) + Duration(30))     # Duration(90s)
+print(Duration(60) + 15)               # Duration(75s)
+print(15 + Duration(60))               # Duration(75s) — thanks to __radd__
+print(Duration(45) == Duration(45))    # True
+print(sum([Duration(10), Duration(20), Duration(30)]))   # Duration(60s)
+```
+
+نکته: `sum` بدونِ مقدارِ شروع از `0` آغاز می‌کند؛ `0 + Duration(10)` به‌لطفِ `__radd__` جواب می‌دهد — برای همین این‌بار به مقدارِ شروع نیاز نبود.
+
+**۲۳.**
+
+```python
+def even_numbers(limit):
+    current = 0
+    while current <= limit:
+        yield current
+        current += 2
+
+print(list(even_numbers(6)))    # [0, 2, 4, 6]
+
+class Inventory:
+    def __init__(self, stock):
+        self._stock = stock          # name -> count
+
+    def __iter__(self):
+        for name, count in self._stock.items():
+            if count > 0:
+                yield name
+
+inv = Inventory({"keyboard": 3, "mouse": 0, "pad": 7})
+print(list(inv))                # ['keyboard', 'pad']
+for item in inv:                # a fresh generator per iteration
+    print(item)
+```
+
+**راهِ دیگر:** `__iter__` می‌توانست `(n for n, c in self._stock.items() if c > 0)` برگرداند — یک generator expression؛ برای منطقِ تک‌شرطی هم‌ارز و فشرده‌تر است.
+
+**۲۴.** معیارِ تعریفِ عملگر «کوتاه‌شدنِ کد» نیست؛ **بدیهی‌بودنِ معنا برای خواننده** است: عملگر فقط وقتی مجاز است که در دامنه‌ی مسئله یک معنای جاافتاده و بی‌ابهام داشته باشد (`Money + Money`، `Vector * 2`، `Duration + 30`). عملگرِ مبهم از متدِ بدنام خطرناک‌تر است چون متدِ بدنام دستِ‌کم اسمی دارد که بشود درباره‌اش سوال کرد؛ اما `+` ظاهری آشنا دارد و خواننده *بدونِ شک* برداشتِ خودش را می‌کند — باگی که در review هم دیده نمی‌شود. `User + User` دستِ‌کم دو تفسیرِ متناقض دارد: «ادغامِ دو حساب» (با کدام سیاست؟) یا «ساختِ یک گروهِ دونفره»؛ حتی می‌شود تصور کرد کسی انتظارِ «جمعِ امتیازها» را داشته باشد. سه برداشت از یک علامت یعنی هیچ برداشتی قابلِ‌اعتماد نیست — اینجا متدِ صریح (`merge_accounts(a, b, policy=...)`) تنها انتخابِ درست است.
