@@ -229,16 +229,6 @@ d = Demo(42)
 
 در ۹۹٪ موارد فقط `__init__` را می‌نویسید و `__new__` را دست نمی‌زنید. اما در چند حالت خاص `__new__` لازم می‌شود: ساختن الگوی Singleton، ارث‌بری از انواع تغییرناپذیر مثل `int` و `tuple` (که مقدارشان باید در زمان ساخت قطعی شود)، و بعضی کارهای پیشرفته‌ی متاکلاسی (فصل شانزدهم).
 
-```python
-# real example: why we must touch __new__ to inherit from tuple
-class Point(tuple):
-    def __new__(cls, x, y):
-        return super().__new__(cls, (x, y))   # the tuple value is finalized here
-
-p = Point(3, 4)
-print(p)        # (3, 4)
-print(p[0])     # 3
-```
 
 ### اشیای بی‌حالت و باحالت
 
