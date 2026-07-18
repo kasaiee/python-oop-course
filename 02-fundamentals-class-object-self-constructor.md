@@ -10,32 +10,6 @@
 
 ## کالبدشکافی مفاهیم، یکی‌یکی
 
-## چرا باید کلاس، شیء، self و سازنده را عمیق درک کنیم؟
-
-بیشتر باگ‌های برنامه‌نویسانِ تازه‌کار در شیءگرایی، از یک‌جا می‌آید: درک نادرست از اینکه داده **کجا** زندگی می‌کند و `self` **به چه** اشاره می‌کند. یک نمونه‌ی کلاسیک:
-
-```python
-class Counter:
-    count = 0          # where does this live? on the class or on the object?
-
-    def increment(self):
-        self.count += 1
-
-a = Counter()
-b = Counter()
-a.increment()
-print(a.count)   # 1
-print(b.count)   # 0 or 1?
-```
-
-اگر نمی‌دانید خروجی خط آخر چیست و چرا، این فصل دقیقاً برای شماست. (پاسخش را در بخش Class/Instance Variable می‌بینید.) درک درستِ این مفاهیم به شما کمک می‌کند:
-
-- اشیاء را درست بسازید و مقداردهی کنید
-- بدانید هر متد به چه داده‌ای دسترسی دارد و چه چیزی را تغییر می‌دهد
-- از باگ‌های مربوط به داده‌ی مشترک و ارجاع جلوگیری کنید
-- کدی بنویسید که رفتارش قابل‌پیش‌بینی باشد
-
-
 ### کلاس و شیء: قالب و نمونه
 
 **کلاس** یک قالب است؛ نقشه‌ای که می‌گوید موجودیت‌هایی از این نوع چه داده‌ای دارند و چه کارهایی می‌کنند. کلاس، خودش یک موجودیت زنده در حافظه نیست — مثل نقشه‌ی یک خانه که خودش خانه نیست.
@@ -163,23 +137,6 @@ print(e1.name, e2.name)         # ali sara — each its own
 Employee.company = "Globex"     # a change on the class affects all
 print(e1.company, e2.company)   # Globex Globex
 ```
-
-حالا بازگردیم به باگ ابتدای فصل:
-
-```python
-class Counter:
-    count = 0                # Class Variable
-
-    def increment(self):
-        self.count += 1      # this line has an important story
-
-a = Counter()
-a.increment()
-print(a.count)      # 1
-print(Counter.count)  # 0
-```
-
-نکته‌ی ظریف: `self.count += 1` در واقع `self.count = self.count + 1` است. سمت راست، `count` را از کلاس می‌خواند (چون هنوز instance variable وجود ندارد)، اما سمت چپ یک **instance variable جدید** روی `self` می‌سازد. پس بعد از `increment`، شیء `a` یک `count` مختص خودش دارد که کلاس را «سایه» می‌زند، و `Counter.count` دست‌نخورده باقی می‌ماند.
 
 قاعده: **Class Variable برای داده‌ای که واقعاً باید مشترک باشد** (مثل نام شرکت، یک شمارنده‌ی کل، تنظیمات پیش‌فرض). برای داده‌ی مختص هر شیء، همیشه از instance variable و `self` در `__init__` استفاده کنید.
 
