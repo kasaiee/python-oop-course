@@ -138,7 +138,7 @@ Employee.company = "Globex"     # a change on the class affects all
 print(e1.company, e2.company)   # Globex Globex
 ```
 
-قاعده: **Class Variable برای داده‌ای که واقعاً باید مشترک باشد** (مثل نام شرکت، یک شمارنده‌ی کل، تنظیمات پیش‌فرض). برای داده‌ی مختص هر شیء، همیشه از instance variable و `self` در `__init__` استفاده کنید.
+قاعده: **Class Variable باید برای داده ای که واقعا مشترک است استفاده شود** مثل نام شرکت، یک شمارنده‌ی کل، تنظیمات پیش‌فرض. برای داده‌ی مختص هر شیء، همیشه از instance variable و `self` در `__init__` استفاده کنید.
 
 یک دام رایج: Class Variableهای تغییرپذیر (مثل لیست) که سهواً مشترک می‌شوند.
 
