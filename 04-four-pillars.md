@@ -133,9 +133,28 @@ print(a._Account__pin)  # 1234 — still accessible, just harder
 
 **Tradeoff:** جاوا با `private` اجباری، امنیت بیشتری می‌دهد اما انعطاف کمتری. پایتون آزادی و انعطاف می‌دهد اما مسئولیت را به شما می‌سپارد. هیچ‌کدام مطلقاً بهتر نیستند.
 
-### چه زمانی از attribute خصوصی استفاده کنیم؟
+### توجه
 
-از یک زیرخط (`_`) استفاده کنید وقتی چیزی جزئیات داخلی پیاده‌سازی است و نمی‌خواهید بیرونی‌ها به آن تکیه کنند. از دو زیرخط (`__`) فقط وقتی واقعاً می‌خواهید از تصادم نام در ارث‌بری جلوگیری کنید — که مورد نادری است. **به‌طور پیش‌فرض، ساده نگه دارید و از یک زیرخط استفاده کنید؛** دو زیرخط را فقط با دلیل مشخص به کار ببرید.
+قوانین کپسول‌سازی فقط برای ویژگی‌ها نیست و برای متد ها هم می‌توان به کار برد. به مثال زیر توجه کنید.
+
+```python
+class BankAccount:
+    def __init__(self, balance):
+        self._balance = balance          # داده محافظت‌شده
+
+    def _validate_amount(self, amount):  # متد کمکی داخلی (محافظت‌شده)
+        if amount <= 0:
+            raise ValueError("Amount must be positive")
+
+    def withdraw(self, amount):          # رابط عمومی برای تعامل
+        self._validate_amount(amount)    # استفاده از متد داخلی
+        if amount > self._balance:
+            raise ValueError("insufficient balance")
+        self._balance -= amount
+
+    def get_balance(self):               # دسترسی کنترل‌شده به داده
+        return self._balance
+```
 
 ## Abstraction — انتزاع
 
