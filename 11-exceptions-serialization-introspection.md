@@ -258,6 +258,31 @@ print(restored.host, restored.socket)   # localhost new connection
 
 **Introspection** یعنی بررسی ساختار اشیاء و کلاس‌ها در **زمان اجرا**. پایتون در این زمینه بسیار قدرتمند است و همین، پایه‌ی خیلی از فریمورک‌ها (مثل جنگو و pytest) است.
 
+### type() و isinstance: بررسی نوع در زمان اجرا
+
+ساده‌ترین سوال درون‌نگرانه این است: «این شیء چه نوعی است؟» پایتون دو راه برای پرسیدنش دارد، اما این دو راه یک جواب نمی‌دهند:
+
+```python
+class Animal: pass
+class Dog(Animal): pass
+
+d = Dog()
+print(type(d) == Dog)          # True
+print(type(d) == Animal)       # False — type checks the exact type only
+print(isinstance(d, Animal))   # True — isinstance respects inheritance
+```
+
+تفاوت دقیقاً در برخورد با ارث‌بری است: `type()` نوع **دقیق** شیء را برمی‌گرداند و سلسله‌مراتب را نادیده می‌گیرد؛ `isinstance` می‌فهمد که یک `Dog` واقعاً یک `Animal` هم هست. به همین دلیل در کد شیءگرا تقریباً همیشه `isinstance` انتخاب درست است — با `type() ==` هر زیرکلاسی که فردا ساخته شود، از چشم شرط شما می‌افتد و چندریختی (فصل ۴) عملاً بی‌اثر می‌شود.
+
+خواهر همین ابزار برای کلاس‌ها (نه اشیاء) `issubclass` است:
+
+```python
+print(issubclass(Dog, Animal))    # True
+print(isinstance(d, (int, Animal)))   # True — a tuple means "any of these"
+```
+
+و یک هشدار مهم: بهترین کد شیءگرا اغلب **اصلاً نوع نمی‌پرسد**. اگر می‌بینید در بدنه‌ی منطق اصلی مدام `isinstance` می‌نویسید، احتمالاً چندریختی یا Duck Typing (فصل ۴) جای درست‌تر آن تصمیم است. جای طبیعی `isinstance`، مرزهای سیستم است: اعتبارسنجی ورودی کاربر، داده‌ی بیرونی، یا تشخیص **قابلیت** با ABC و Protocol (فصل ۹).
+
 ### __dict__ و __dir__
 
 `__dict__` دیکشنری attributeهای یک شیء را نشان می‌دهد؛ `dir()` فهرست همه‌ی نام‌های در‌دسترس را:
@@ -377,7 +402,7 @@ print(greet.__code__.co_varnames)     # ('name', 'greeting')
 | منابع | context manager، `contextlib` | تمیزتر از `try/finally` |
 | JSON | `to_dict`/`from_dict`، `default` | امن، بین‌زبانی، فقط انواع ساده |
 | pickle | `__getstate__`/`__setstate__` | قوی اما **ناامن** با داده‌ی نامطمئن |
-| Introspection | `__dict__`، `getattr`، `inspect` | پایه‌ی فریمورک‌ها |
+| Introspection | `isinstance`، `__dict__`، `getattr`، `inspect` | پایه‌ی فریمورک‌ها |
 
 **نکته‌ی طلایی:** بزرگ‌ترین درس امنیتی این فصل را فراموش نکنید: **هرگز pickle نامطمئن را باز نکنید.** و در طراحی استثناها، یک سلسله‌مراتب تمیز بسازید — این سرمایه‌گذاری کوچک، مدیریت خطا را در کل عمر پروژه ساده نگه می‌دارد. Introspection قدرتمند است، اما وسوسه‌ی استفاده‌ی افراطی از آن (کد بیش‌ازحد پویا) را مهار کنید؛ کد صریح، تقریباً همیشه خواناتر است.
 

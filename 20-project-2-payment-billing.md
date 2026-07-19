@@ -264,7 +264,7 @@ class PaymentProcessor:
         return f"✓ {method.refund(invoice.total())}"
 ```
 
-بررسی `isinstance(method, Refundable)` تنها جایی است که نوع را چک می‌کنیم — و آن هم برای تشخیص **قابلیت** است، نه نوع مشخص. این استفاده‌ی درست از `isinstance` است (فصل ۴).
+بررسی `isinstance(method, Refundable)` تنها جایی است که نوع را چک می‌کنیم — و آن هم برای تشخیص **قابلیت** است، نه نوع مشخص. این استفاده‌ی درست از `isinstance` است (فصل‌های ۹ و ۱۱).
 
 ### گام ۵: همه‌چیز کنار هم
 
