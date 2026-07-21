@@ -544,94 +544,129 @@ print(User.is_valid_username("a"))      # False
 دکوراتورهای کلاسی ابزارهایی برای سازماندهی بهتر کد هستند. متدهای کلاس به شما امکان می‌دهند تا روش‌های ساخت شیء را توسعه دهید و متدهای ایستا به شما اجازه می‌دهند تا توابع مرتبط را در کنار کلاس قرار دهید. هر دو ابزار، کد شما را خواناتر، منظم‌تر و قابل‌نگهداری‌تر می‌کنند.
 
 
-## متدهای جادویی (Dunder Methods)
+## متدهای جادویی (Magic Methods) در پایتون
 
-متدهای جادویی — با نام‌های `__something__` — قلاب‌هایی هستند که پایتون در موقعیت‌های خاص خودکار صدایشان می‌زند. با پیاده‌سازی آن‌ها، کلاس شما با زبان یکپارچه می‌شود.
+### متدهای جادویی چه هستند و چرا به آنها جادویی می‌گویند؟
 
-### __str__ و __repr__: دو چهره‌ی نمایش شیء
+در پایتون، متدهایی وجود دارند که نامشان با دو خط زیرخط (__) شروع و با دو خط زیرخط پایان می‌یابد؛ مانند `__init__`، `__str__` و `__add__`. به این متدها، «متدهای جادویی» یا «Dunder Methods» (مخفف Double UNDERscore) گفته می‌شود.
 
-اولین جفتی که هر کلاس جدی باید بشناسد، متدهای نمایش‌اند. بدون آن‌ها، `print` روی شیء شما چیزی شبیه `<Money object at 0x7f3a...>` چاپ می‌کند که به هیچ دردی نمی‌خورد. پایتون دو قلاب نمایش دارد که مخاطب‌هایشان فرق می‌کند:
+دلیل «جادویی» نامیدن آنها این است که **نیازی به فراخوانی مستقیم آنها ندارید**؛ پایتون خودش در موقعیت‌های خاص، آنها را به صورت خودکار صدا می‌زند. برای نمونه، هنگامی که یک شیء جدید می‌سازید، پایتون `__init__` را اجرا می‌کند. وقتی از عملگر `+` استفاده می‌کنید، پایتون به سراغ `__add__` می‌رود. و وقتی `print(obj)` را می‌نویسید، پایتون `__str__` را فرا می‌خواند.
 
-- `__str__`: نمایش **خوانا برای کاربر نهایی**. وقتی `print(obj)` یا `str(obj)` صدا زده شود، اجرا می‌شود.
-- `__repr__`: نمایش **دقیق برای برنامه‌نویس** — ایدئال این است که بتوان با کپی‌کردنش شیء را بازساخت. وقتی شیء را در کنسول تایپ کنید یا `repr(obj)` بگیرید، اجرا می‌شود.
+این متدها، **پل ارتباطی میان کلاس شما و ساختارهای زبانی پایتون** هستند. با پیاده‌سازی آنها، به پایتون می‌آموزید که اشیاء شما چگونه باید با عملگرها، حلقه‌ها، توابع داخلی و سایر اجزای زبان تعامل داشته باشند.
+
+در این بخش، مهم‌ترین و پرکاربردترین متدهای جادویی را به ترتیب از ساده به پیشرفته بررسی می‌کنیم.
+
+---
+
+### ۱. نمایش اشیاء: `__str__` و `__repr__`
+
+وقتی یک شیء را چاپ می‌کنید یا در کنسول تایپ می‌کنید، پایتون باید آن را به رشته تبدیل کند. دو متد جادویی این کار را انجام می‌دهند.
+
+**`__repr__`**: نمایش رسمی و دقیق شیء برای برنامه‌نویسان. هدف این است که اگر خروجی آن را کپی کنید، بتوانید شیء را بازسازی کنید. این متد زمانی استفاده می‌شود که:
+
+- شیء را در کنسول (REPL) تایپ می‌کنید.
+- از تابع `repr(obj)` استفاده می‌کنید.
+- شیء داخل یک容器 (لیست، دیکشنری) قرار دارد و چاپ می‌شود.
+
+**`__str__`**: نمایش خوانا و دوستانه برای کاربر نهایی. زمانی استفاده می‌شود که:
+
+- از `print(obj)` استفاده می‌کنید.
+- از تابع `str(obj)` استفاده می‌کنید.
+- از قالب‌بندی رشته با `f"{obj}"` استفاده می‌کنید.
+
+**قاعده‌ی طلایی**: همیشه `__repr__` را تعریف کنید. اگر `__str__` را تعریف نکنید، پایتون در مواقع نیاز به `__str__`، به‌جای آن از `__repr__` استفاده می‌کند. بنابراین با تعریف `__repr__`، یک تیر و دو نشان زده‌اید.
 
 ```python
-class Money:
-    def __init__(self, amount, currency):
-        self.amount = amount
-        self.currency = currency
-
-    def __str__(self):
-        return f"{self.amount:,} {self.currency}"            # for the user
+class Book:
+    def __init__(self, title, author, pages):
+        self.title = title
+        self.author = author
+        self.pages = pages
 
     def __repr__(self):
-        return f"Money({self.amount!r}, {self.currency!r})"  # for the programmer
+        # returns a string that could recreate the object
+        return f"Book({self.title!r}, {self.author!r}, {self.pages})"
 
-m = Money(1000, "Toman")
-print(m)          # 1,000 Toman            ← __str__
-print(repr(m))    # Money(1000, 'Toman')   ← __repr__
-print([m])        # [Money(1000, 'Toman')] ← inside containers, __repr__ is used
+    def __str__(self):
+        # returns a user-friendly string
+        return f"{self.title} by {self.author} ({self.pages} pages)"
+
+book = Book("1984", "George Orwell", 328)
+
+print(book)           # 1984 by George Orwell (328 pages)  ← __str__
+print(repr(book))     # Book('1984', 'George Orwell', 328)  ← __repr__
+print([book])         # [Book('1984', 'George Orwell', 328)]  ← __repr__ inside list
 ```
 
-به خط آخر دقت کنید: وقتی شیء داخل لیست یا دیکشنری چاپ می‌شود، پایتون از `__repr__` استفاده می‌کند نه `__str__` — نکته‌ای که اولین‌بار همه را غافلگیر می‌کند.
+**نکته**: در `__repr__` از `!r` استفاده کردیم تا مطمئن شویم رشته‌ها با کوتیشن نمایش داده می‌شوند. این کار بازتولید شیء را دقیق‌تر می‌کند.
 
-قاعده‌ی حرفه‌ای: همیشه دست‌کم `__repr__` را تعریف کنید؛ اگر `__str__` تعریف نشده باشد، پایتون به‌جایش به همان `__repr__` عقب‌گرد می‌کند، پس با یک متد هر دو نمایش را پوشش داده‌اید. `__str__` را فقط وقتی جدا بنویسید که نمایش کاربرپسندِ متفاوتی لازم دارید.
+---
 
-### __format__
+### ۲. متد `__format__`: کنترل قالب‌بندی پیشرفته
 
-عضو سوم این خانواده `__format__` است که کنترل می‌کند وقتی شیء در f-string با مشخصه‌ی قالب می‌آید چه شود:
+این متد به شما اجازه می‌دهد وقتی از f-string با مشخصه‌ی قالب‌بندی استفاده می‌کنید، خروجی را کنترل کنید.
 
 ```python
-class Money:
-    def __init__(self, amount):
-        self.amount = amount
+class Book:
+    def __init__(self, title, author, pages):
+        self.title = title
+        self.author = author
+        self.pages = pages
 
     def __format__(self, spec):
-        if spec == "long":
-            return f"{self.amount:,} Toman"
-        return str(self.amount)
+        if spec == "short":
+            return f"{self.title} ({self.pages}p)"
+        elif spec == "long":
+            return f"{self.title} by {self.author}, {self.pages} pages"
+        return str(self)
 
-m = Money(1500000)
-print(f"{m:long}")   # 1,500,000 Toman
-print(f"{m}")        # 1500000
+book = Book("1984", "George Orwell", 328)
+print(f"{book:short}")   # 1984 (328p)
+print(f"{book:long}")    # 1984 by George Orwell, 328 pages
 ```
 
-### __eq__ و __hash__
+---
 
-به‌طور پیش‌فرض، دو شیء فقط وقتی برابرند که **یک شیء واحد** باشند (هویت). `__eq__` اجازه می‌دهد برابری را بر اساس **مقدار** تعریف کنید:
+### ۳. برابری و هش: `__eq__` و `__hash__`
+
+به طور پیش‌فرض، دو شیء فقط زمانی برابر در نظر گرفته می‌شوند که دقیقاً یک شیء در حافظه باشند (همان هویت). با `__eq__` می‌توانید برابری را بر اساس **مقدار** تعریف کنید.
 
 ```python
 class Point:
     def __init__(self, x, y):
-        self.x, self.y = x, y
+        self.x = x
+        self.y = y
 
     def __eq__(self, other):
+        # check if other is also a Point
         if not isinstance(other, Point):
             return NotImplemented
         return self.x == other.x and self.y == other.y
 
     def __hash__(self):
+        # objects that are equal must have the same hash
         return hash((self.x, self.y))
 
-a = Point(1, 2)
-b = Point(1, 2)
-print(a == b)      # True — because of __eq__ (same value)
-print(a is b)      # False — two separate objects in memory
-print(a is a)      # True
+p1 = Point(1, 2)
+p2 = Point(1, 2)
+p3 = Point(2, 3)
+
+print(p1 == p2)    # True (same values)
+print(p1 == p3)    # False (different values)
+print(p1 is p2)    # False (different objects in memory)
+
+# Now Point objects can be used in sets and dictionaries
+points_set = {p1, p2}
+print(len(points_set))   # 1 (because p1 and p2 are equal)
 ```
 
-تفاوت `==` و `is`: `==` برابری **مقدار** را می‌سنجد (که `__eq__` تعریفش می‌کند)؛ `is` برابری **هویت** را (آیا دقیقاً همان شیء در حافظه است).
+**نکته‌ی مهم**: اگر `__eq__` را تعریف کنید، پایتون به طور خودکار `__hash__` را حذف می‌کند و شیء شما را «غیرقابل هش» می‌کند. این یعنی نمی‌توانید از آن در `set` یا به عنوان کلید `dict` استفاده کنید. اگر می‌خواهید چنین قابلیتی داشته باشید، باید `__hash__` را به گونه‌ای تعریف کنید که با `__eq__` سازگار باشد (دو شیء برابر باید هش یکسان داشته باشند).
 
-چرا `__hash__` هم لازم شد؟ چون به‌محض تعریف `__eq__`، پایتون شیء را غیرقابل‌hash می‌کند و نمی‌توانید در `set` یا کلید `dict` استفاده‌اش کنید. اگر می‌خواهید شیء در مجموعه یا دیکشنری برود، باید `__hash__` سازگار با `__eq__` تعریف کنید (دو شیء برابر باید hash یکسان داشته باشند):
+---
 
-```python
-points = {Point(1, 2), Point(1, 2)}
-print(len(points))   # 1 — because they are equal and have the same hash
-```
+### ۴. عملگرهای حسابی: `__add__`، `__radd__`، `__mul__` و دوستان
 
-### عملگرها را به خدمت بگیرید: __add__ و دوستانش
-
-حالا که `==` را رام کردیم، سراغ بقیه‌ی عملگرها برویم. فرض کنید در سیستم صورت‌حساب با پول کار می‌کنید. جمع‌زدن مبلغ‌ها با متد، خوانا نیست: `total.add(price).add(tax)`. چقدر بهتر که خود `+` کار کند — و پایتون اجازه می‌دهد:
+با پیاده‌سازی این متدها، اشیاء شما از عملگرهای ریاضی پشتیبانی می‌کنند.
 
 ```python
 class Money:
@@ -642,41 +677,49 @@ class Money:
     def __repr__(self):
         return f"Money({self.amount:,} {self.currency})"
 
-    def __add__(self, other):                 # self + other
+    def __add__(self, other):
+        # self + other
         if isinstance(other, Money):
             if other.currency != self.currency:
-                raise ValueError("cannot add different currencies")
+                raise ValueError("Cannot add different currencies")
             return Money(self.amount + other.amount, self.currency)
-        if isinstance(other, int):            # Money + 1000 also makes sense
+        if isinstance(other, (int, float)):
             return Money(self.amount + other, self.currency)
-        return NotImplemented                 # "I don't know this type"
+        return NotImplemented
 
-    def __radd__(self, other):                # other + self (when other fails first)
+    def __radd__(self, other):
+        # other + self (when other doesn't know how to add Money)
         return self.__add__(other)
 
-    def __mul__(self, factor):                # Money * 3
-        if isinstance(factor, int):
+    def __mul__(self, factor):
+        # self * factor
+        if isinstance(factor, (int, float)):
             return Money(self.amount * factor, self.currency)
         return NotImplemented
 
 price = Money(500_000)
 tax = Money(45_000)
-print(price + tax)          # Money(545,000 IRR)
-print(price + 5_000)        # Money(505,000 IRR)   ← __add__ with int
-print(5_000 + price)        # Money(505,000 IRR)   ← __radd__ saved us
-print(price * 3)            # Money(1,500,000 IRR)
-print(sum([price, tax], Money(0)))   # Money(545,000 IRR) — even sum() works now
+
+print(price + tax)           # Money(545,000 IRR)  ← __add__
+print(price + 5_000)         # Money(505,000 IRR)  ← __add__ with int
+print(5_000 + price)         # Money(505,000 IRR)  ← __radd__ handles this
+print(price * 3)             # Money(1,500,000 IRR)  ← __mul__
+
+# sum() works too!
+print(sum([price, tax], Money(0)))   # Money(545,000 IRR)
 ```
 
-سه نکته‌ی حرفه‌ای در این کد هست که در بیشتر آموزش‌ها پیدایش نمی‌کنید:
+**نکته‌ی کلیدی در مورد `NotImplemented`**: اگر نوع داده‌ای را نمی‌شناسید، `NotImplemented` را برگردانید (نه `NotImplementedError`). این به پایتون اجازه می‌دهد شانس را به طرف مقابل (مثلاً `__radd__`) بدهد. اگر هر دو طرف ناتوان باشند، پایتون خودش `TypeError` را پرتاب می‌کند.
 
-**`NotImplemented` (نه `NotImplementedError`!)** یک مقدار ویژه است، نه استثنا. وقتی برمی‌گردانیدش، دارید مؤدبانه به پایتون می‌گویید «من با این نوع آشنا نیستم» — و پایتون به‌جای شکست، **شانس را به طرف مقابل می‌دهد**. اگر او هم بلد نبود، آن‌وقت `TypeError` می‌آید. اگر به‌جایش استثنا پرت می‌کردید، این مذاکره‌ی دوطرفه را می‌کشتید.
+**سایر عملگرها**:
 
-**`__radd__` همان شانس دوم است:** در `5_000 + price`، پایتون اول `int.__add__(5000, price)` را امتحان می‌کند که `Money` را نمی‌شناسد و `NotImplemented` می‌دهد؛ بعد نوبت `price.__radd__(5000)` می‌رسد. بدون `__radd__`، جمع ما فقط یک‌طرفه کار می‌کرد — باگی که معمولاً اولین‌بار در `sum()` خودش را نشان می‌دهد، چون `sum` از صفر عددی شروع می‌کند.
+- `__sub__` برای `-`
+- `__truediv__` برای `/`
+- `__floordiv__` برای `//`
+- `__mod__` برای `%`
+- `__pow__` برای `**`
 
-**عملگر جدید، شیء جدید:** `__add__` ما `Money` تازه می‌سازد و self را دست نمی‌زند — مثل خود اعداد و رشته‌های پایتون. اگر بخواهید `+=` درجا (in-place) عمل کند، `__iadd__` را جدا تعریف می‌کنید؛ برای اشیای تغییرناپذیر منطقی مثل پول، همین ساخت نسخه‌ی جدید درست‌تر است.
-
-برای مقایسه‌ها (`<`، `>=`، ...) هم می‌شود شش متد نوشت — اما لازم نیست. `functools.total_ordering` با داشتن `__eq__` و فقط یکی از مقایسه‌ها، بقیه را خودش می‌سازد:
+برای عملگرهای مقایسه‌ای (`<`, `<=`, `>`, `>=`) نیز می‌توان متدهای جداگانه تعریف کرد، اما با استفاده از `functools.total_ordering` و تعریف تنها `__eq__` و یکی از مقایسه‌ها، بقیه خودکار ساخته می‌شوند:
 
 ```python
 from functools import total_ordering
@@ -684,7 +727,8 @@ from functools import total_ordering
 @total_ordering
 class Version:
     def __init__(self, major, minor):
-        self.major, self.minor = major, minor
+        self.major = major
+        self.minor = minor
 
     def __eq__(self, other):
         return (self.major, self.minor) == (other.major, other.minor)
@@ -692,37 +736,46 @@ class Version:
     def __lt__(self, other):
         return (self.major, self.minor) < (other.major, other.minor)
 
-print(Version(3, 10) > Version(3, 9))    # True — we never wrote __gt__!
-print(Version(2, 0) >= Version(2, 0))    # True — nor __ge__
+v1 = Version(3, 10)
+v2 = Version(3, 9)
+print(v1 > v2)    # True (we never wrote __gt__!)
+print(v1 >= v2)   # True (we never wrote __ge__!)
 ```
 
-**Tradeoff:** عملگرها فقط وقتی تعریف کنید که معنایشان برای خواننده **بدیهی** باشد. `Money + Money` بدیهی است؛ اما `User + User` یعنی چه؟ ازدواج؟ ادغام حساب؟ عملگر مبهم از متد بدنام هم بدتر است، چون ظاهرش ساده و رفتارش غافلگیرکننده است.
+---
 
-### __bool__
+### ۵. متد `__bool__`: تعیین صحت و سقم در شرط‌ها
 
-تعیین می‌کند شیء در شرط‌ها True است یا False:
+این متد تعیین می‌کند که شیء شما در موقعیت‌های شرطی (مانند `if obj:` یا `while obj:`) چگونه رفتار کند.
 
 ```python
-class Cart:
+class ShoppingCart:
     def __init__(self):
         self.items = []
 
+    def add_item(self, item):
+        self.items.append(item)
+
     def __bool__(self):
+        # cart is True if it has items, False if empty
         return len(self.items) > 0
 
-cart = Cart()
-if not cart:                     # __bool__ is called
-    print("cart is empty")       # is printed
+cart = ShoppingCart()
+if not cart:
+    print("Cart is empty")   # will be printed
+
+cart.add_item("book")
+if cart:
+    print("Cart has items")  # will be printed
 ```
 
-### کلاس به‌مثابه‌ی Container
+اگر `__bool__` تعریف نشود، پایتون به سراغ `__len__` می‌رود: اگر `__len__` صفر برگرداند، شیء `False` در نظر گرفته می‌شود، در غیر این صورت `True`.
 
-مجموعه‌ای از متدهای جادویی، کلاس شما را به یک **کانتینر** (قابل ایندکس، پیمایش، و پشتیبانی از `in`) تبدیل می‌کنند:
+---
 
-- `__getitem__` / `__setitem__`: دسترسی با `[]`
-- `__len__`: پشتیبانی از `len()`
-- `__contains__`: پشتیبانی از عملگر `in`
-- `__iter__`: پشتیبانی از حلقه‌ی `for`
+### ۶. کانتینرها: `__getitem__`، `__setitem__`، `__delitem__`، `__len__`، `__contains__`
+
+این متدها به کلاس شما اجازه می‌دهند مانند لیست‌ها یا دیکشنری‌ها رفتار کند و از ایندکس‌گذاری، پیمایش و عملگر `in` پشتیبانی کند.
 
 ```python
 class Playlist:
@@ -733,33 +786,51 @@ class Playlist:
         self._songs.append(song)
 
     def __getitem__(self, index):
+        # support for playlist[index]
         return self._songs[index]
 
+    def __setitem__(self, index, value):
+        # support for playlist[index] = value
+        self._songs[index] = value
+
+    def __delitem__(self, index):
+        # support for del playlist[index]
+        del self._songs[index]
+
     def __len__(self):
+        # support for len(playlist)
         return len(self._songs)
 
     def __contains__(self, song):
+        # support for "song" in playlist
         return song in self._songs
 
     def __iter__(self):
+        # support for for song in playlist
         return iter(self._songs)
 
-p = Playlist()
-p.add("Song 1")
-p.add("Song 2")
+playlist = Playlist()
+playlist.add("Song 1")
+playlist.add("Song 2")
 
-print(len(p))              # 2         ← __len__
-print(p[0])                # Song 1     ← __getitem__
-print("Song 2" in p)       # True      ← __contains__
-for song in p:             # ← __iter__
+print(len(playlist))         # 2  ← __len__
+print(playlist[0])           # Song 1  ← __getitem__
+print("Song 2" in playlist)  # True  ← __contains__
+
+for song in playlist:        # ← __iter__
     print(song)
+
+playlist[1] = "New Song"     # ← __setitem__
+del playlist[0]              # ← __delitem__
 ```
 
-با این چند متد، `Playlist` طوری رفتار می‌کند که انگار یک لیست داخلی پایتون است — این اوج یکپارچگی با زبان است.
+**نکته**: اگر `__getitem__` را تعریف کنید، پایتون به طور خودکار یک `__iter__` پیش‌فرض ایجاد می‌کند که از ایندکس‌گذاری استفاده می‌کند. اما تعریف صریح `__iter__` کنترل بیشتری به شما می‌دهد.
 
-### پروتکل Iterator: __iter__ و __next__
+---
 
-`__iter__` به‌تنهایی می‌تواند یک iterator داخلی برگرداند (مثل بالا). اما اگر بخواهید منطق پیمایش سفارشی داشته باشید، از `__next__` هم استفاده می‌کنید:
+### ۷. پروتکل Iterator: `__iter__` و `__next__`
+
+اگر می‌خواهید کنترل کامل روی نحوه‌ی پیمایش داشته باشید، می‌توانید خودتان پروتکل Iterator را پیاده‌سازی کنید.
 
 ```python
 class Countdown:
@@ -767,107 +838,120 @@ class Countdown:
         self.current = start
 
     def __iter__(self):
-        return self                  # the object itself is the iterator
+        # returns the iterator object (itself)
+        return self
 
     def __next__(self):
+        # returns the next value, or raises StopIteration when done
         if self.current <= 0:
-            raise StopIteration      # end of iteration
+            raise StopIteration
+        value = self.current
         self.current -= 1
-        return self.current + 1
+        return value
 
-for n in Countdown(3):
-    print(n)     # 3, 2, 1
+for n in Countdown(5):
+    print(n)   # 5, 4, 3, 2, 1
 ```
 
-تفاوت با `__getitem__`: `__getitem__` برای دسترسی ایندکسی است؛ پروتکل iterator (`__iter__`/`__next__`) برای پیمایش کنترل‌شده و بالقوه بی‌پایان یا محاسبه‌شونده مناسب‌تر است.
+---
 
-### میان‌بُر پایتونی: جنریتور به‌جای کلاس Iterator
+### ۸. میان‌بر پایتونی: جنریتورها با `yield`
 
-حالا که زحمت `Countdown` را کشیدیم، بگذارید رازی را بگویم: در کد حرفه‌ای پایتون، به‌ندرت کسی کلاس iterator دستی می‌نویسد. کلیدواژه‌ی `yield` همان پروتکل را **خودکار** پیاده می‌کند:
+پیاده‌سازی دستی پروتکل Iterator مانند بالا، در کد حرفه‌ای به ندرت دیده می‌شود. پایتون میان‌بری به نام **جنریتور** ارائه می‌دهد که با کلمه‌ی کلیدی `yield` کار می‌کند.
 
 ```python
 def countdown(start):
     while start > 0:
-        yield start          # pause here, hand the value out, resume later
+        yield start   # pause here, return value, resume later
         start -= 1
 
-for n in countdown(3):
-    print(n)                 # 3, 2, 1 — identical behavior, three lines
+for n in countdown(5):
+    print(n)   # 5, 4, 3, 2, 1
 ```
 
-تابعی که `yield` دارد، **جنریتور** است: با هر فراخوانی، شیئی برمی‌گرداند که `__iter__` و `__next__` را از قبل دارد. اجرایش «قابل توقف» است — به `yield` که می‌رسد مقدار را تحویل می‌دهد و منجمد می‌شود تا مقدار بعدی خواسته شود. حالت بین مراحل (متغیر `start`) هم به‌جای attributeهای دستی، در خود متغیرهای محلی تابع زنده می‌ماند.
-
-این میان‌بُر داخل کلاس‌ها هم درخشان است. `__iter__` می‌تواند خودش یک جنریتور باشد:
+جنریتورها در کلاس‌ها نیز قابل استفاده هستند:
 
 ```python
-class OrderHistory:
+class Playlist:
     def __init__(self):
-        self._orders = []
+        self._songs = []
 
-    def add(self, order_id, amount):
-        self._orders.append((order_id, amount))
+    def add(self, song):
+        self._songs.append(song)
 
     def __iter__(self):
-        for order_id, amount in self._orders:
-            if amount > 0:               # filtering logic, cleanly inline
-                yield order_id
+        # generator as iterator: filter out empty strings
+        for song in self._songs:
+            if song:   # skip empty strings
+                yield song
 
-history = OrderHistory()
-history.add(1, 90_000)
-history.add(2, 0)          # a cancelled order
-history.add(3, 45_000)
-print(list(history))       # [1, 3] — for/list/in all work, no __next__ in sight
+playlist = Playlist()
+playlist.add("Song 1")
+playlist.add("")
+playlist.add("Song 3")
+
+for song in playlist:
+    print(song)   # Song 1, Song 3 (empty one is skipped)
 ```
 
-**قاعده‌ی انتخاب:** کلاس iterator دستی وقتی می‌ارزد که پیمایش، خودش یک موجودیت کامل با چند متد و حالت قابل‌بازرسی باشد (مثلاً iterator ی که بشود pause/resume/skipش کرد). برای بقیه‌ی موارد — یعنی تقریباً همیشه — `yield` کوتاه‌تر، خواناتر و کم‌خطاتر است. این را در فصل دوازدهم دوباره می‌بینید: خیلی از الگوهای کلاسیک، در پایتون میان‌بُر زبانی دارند.
+**چه زمانی از جنریتور و چه زمانی از کلاس Iterator استفاده کنیم؟**
 
-### Context Manager: __enter__ و __exit__
+- از **جنریتور** استفاده کنید مگر اینکه نیاز به پیاده‌سازی پیچیده‌ای داشته باشید که جنریتور توانایی آن را نداشته باشد (مانند قابلیت pause/resume یا متدهای اضافی). در ۹۹٪ موارد، جنریتور کافی و ساده‌تر است.
 
-این دو متد اجازه می‌دهند کلاس شما با عبارت `with` کار کند — الگوی استاندارد مدیریت منابع (فایل، اتصال دیتابیس، قفل):
+---
+
+### ۹. مدیریت زمینه (Context Manager): `__enter__` و `__exit__`
+
+این دو متد به کلاس شما اجازه می‌دهند با عبارت `with` کار کند. این الگو برای مدیریت منابع (فایل‌ها، اتصالات دیتابیس، قفل‌ها) بسیار مناسب است.
 
 ```python
 class DatabaseConnection:
     def __enter__(self):
-        print("connection opened")
-        return self                  # what is given to `as`
+        # called when entering the 'with' block
+        print("Connection opened")
+        return self   # the object that will be bound to 'as'
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        print("connection closed")       # runs even if an error occurs
-        return False                 # False means do not suppress the exception
+        # called when exiting the 'with' block (even if an error occurred)
+        print("Connection closed")
+        # return False to propagate exceptions, True to suppress them
+        return False
 
     def query(self, sql):
-        return f"Result: {sql}"
+        return f"Result for: {sql}"
 
 with DatabaseConnection() as db:
     print(db.query("SELECT * FROM users"))
 # Output:
-# connection opened
-# Result: SELECT * FROM users
-# connection closed   ← guaranteed, even on error
+# Connection opened
+# Result for: SELECT * FROM users
+# Connection closed
 ```
 
-قدرت context manager این است که `__exit__` **همیشه** اجرا می‌شود — چه بلوک عادی تمام شود چه با استثنا. برای همین برای آزادکردن مطمئن منابع ایده‌آل است.
+**چرا از `with` استفاده کنیم؟**
 
-### __call__: شیءای که تابع می‌شود
+- تضمین می‌کند که `__exit__` حتی در صورت بروز استثنا نیز اجرا شود.
+- کد را خواناتر و قابل‌نگهداری‌تر می‌کند.
 
-`__call__` شیء شما را **قابل‌فراخوانی مثل تابع** می‌کند: با تعریف آن، عبارت `obj(...)` مجاز می‌شود و همین متد اجرا می‌شود:
+---
+
+### ۱۰. متد `__call__`: شیء به عنوان تابع
+
+با تعریف `__call__`، شیء شما قابل فراخوانی مانند یک تابع می‌شود. این قابلیت برای ساخت توابع با حافظه (stateful functions) بسیار مفید است.
 
 ```python
 class Multiplier:
     def __init__(self, factor):
         self.factor = factor
 
-    def __call__(self, x):           # makes the object callable
+    def __call__(self, x):
         return x * self.factor
 
 double = Multiplier(2)
-print(double(10))       # 20 — as if double were a function!
-print(callable(double)) # True
-```
+print(double(10))   # 20  ← __call__
+print(callable(double))   # True
 
-چرا به‌جای یک تابع ساده، کلاس با `__call__` بسازیم؟ چون این «تابع»، **حالت** هم دارد: `factor` را در خودش نگه می‌دارد. هر جا چیزی لازم دارید که مثل تابع صدا زده شود اما بین فراخوانی‌ها چیزی به خاطر بسپارد، `__call__` جواب است. یک کاربرد واقعی‌اش، ماشین حالت است:
-
-```python
+# A more practical example: rate limiter
 class RateLimiter:
     def __init__(self, max_calls):
         self.max_calls = max_calls
@@ -876,70 +960,187 @@ class RateLimiter:
     def __call__(self):
         self.calls += 1
         if self.calls > self.max_calls:
-            return "blocked"
-        return "allowed"
+            return "Blocked"
+        return "Allowed"
 
-limit = RateLimiter(2)
-print(limit())   # allowed
-print(limit())   # allowed
-print(limit())   # blocked — the object kept its state between calls
+limiter = RateLimiter(2)
+print(limiter())   # Allowed
+print(limiter())   # Allowed
+print(limiter())   # Blocked
 ```
 
-### __getattr__ و __setattr__ (پیشرفته)
+---
 
-- `__getattr__`: فقط وقتی صدا زده می‌شود که attribute به‌روش معمول **پیدا نشود**. برای مقادیر پیش‌فرض یا پروکسی مفید است.
-- `__getattribute__`: برای **هر** دسترسی صدا زده می‌شود (خطرناک‌تر، به‌ندرت لازم).
-- `__setattr__`: هنگام هر مقداردهی attribute. اینجا باید مراقب **حلقه‌ی بی‌نهایت** بود.
+### ۱۱. مدیریت پویای attributeها: `__getattr__` و `__setattr__`
+
+این متدها برای کنترل دسترسی به attributeهایی که وجود ندارند یا به صورت پویا ایجاد می‌شوند، کاربرد دارند.
+
+**`__getattr__`**: فقط زمانی فراخوانی می‌شود که attribute به روش معمول یافت نشود. برای ارائه‌ی مقدار پیش‌فرض برای attributeهای گم‌شده مفید است.
 
 ```python
 class SafeConfig:
+    def __init__(self):
+        self.host = "localhost"
+
     def __getattr__(self, name):
-        # only for missing attributes
+        # called only for missing attributes
         return f"<{name} not defined>"
 
-    def __setattr__(self, name, value):
-        # infinite-loop trap! you must not write self.name = value
-        # because it would call __setattr__ again
-        super().__setattr__(name, value)   # the right way
-
-c = SafeConfig()
-c.host = "localhost"
-print(c.host)      # localhost
-print(c.missing)   # <missing not defined>  ← __getattr__
+config = SafeConfig()
+print(config.host)      # localhost (exists)
+print(config.port)      # <port not defined> (missing)
 ```
 
-نکته‌ی حیاتی: درون `__setattr__` هرگز مستقیم `self.x = ...` ننویسید؛ آن، دوباره `__setattr__` را صدا می‌زند و حلقه‌ی بی‌نهایت می‌سازد. همیشه از `super().__setattr__(...)` استفاده کنید.
-
-### Descriptor Protocol (پیش‌درآمد)
-
-`__get__`، `__set__` و `__delete__` هسته‌ی **Descriptor** هستند — مکانیزمی که خود `@property`، `@classmethod` و حتی متدها روی آن ساخته شده‌اند. Descriptor به شما اجازه می‌دهد منطق دسترسی به attribute را در یک کلاس جداگانه و **قابل‌استفاده‌ی مجدد** بگذارید:
+**`__setattr__`**: برای هر مقداردهی attribute (حتی attributeهای موجود) فراخوانی می‌شود. برای اعتبارسنجی یا ثبت‌نام تغییرات کاربرد دارد.
 
 ```python
-class Positive:
+class ValidatedAttributes:
+    def __setattr__(self, name, value):
+        # validation before setting
+        if name == "age" and (value < 0 or value > 150):
+            raise ValueError("Age must be between 0 and 150")
+        # use super() to avoid infinite recursion
+        super().__setattr__(name, value)
+
+obj = ValidatedAttributes()
+obj.age = 30      # OK
+# obj.age = 200   # ValueError: Age must be between 0 and 150
+```
+
+**هشدار**: درون `__setattr__` هرگز از `self.name = value` استفاده نکنید، زیرا این کار دوباره `__setattr__` را فراخوانی می‌کند و به حلقه‌ی بی‌نهایت می‌انجامد. همیشه از `super().__setattr__(name, value)` استفاده کنید.
+
+---
+
+### ۱۲. متدهای پیشرفته‌تر: `__new__` و `__slots__`
+
+**`__new__`**: متدی که قبل از `__init__` اجرا می‌شود و مسئول **ساخت** شیء است (در حالی که `__init__` مسئول **مقداردهی** آن است). در موارد زیر کاربرد دارد:
+
+- ساخت شیء از کلاس‌های تغییرناپذیر مانند `tuple` یا `str`.
+- پیاده‌سازی الگوی Singleton.
+- هنگامی که نیاز به کنترل دقیق بر فرآیند ساخت شیء دارید.
+
+```python
+class Singleton:
+    _instance = None
+
+    def __new__(cls, *args, **kwargs):
+        if cls._instance is None:
+            cls._instance = super().__new__(cls)
+        return cls._instance
+
+    def __init__(self, value):
+        self.value = value
+
+a = Singleton(10)
+b = Singleton(20)
+print(a.value)   # 20 (b changed it)
+print(a is b)    # True (only one instance exists)
+```
+
+**`__slots__`**: مکانیزمی برای بهینه‌سازی حافظه. با تعریف `__slots__`، به پایتون می‌گویید که فقط attributeهای مشخص‌شده را بپذیرد و از ایجاد `__dict__` برای هر شیء جلوگیری کند. این کار حافظه را به شدت کاهش می‌دهد، به ویژه وقتی تعداد زیادی شیء می‌سازید.
+
+```python
+class Point:
+    __slots__ = ('x', 'y')   # only these attributes are allowed
+
+    def __init__(self, x, y):
+        self.x = x
+        self.y = y
+
+p = Point(1, 2)
+print(p.x)    # 1
+# p.z = 3     # AttributeError: 'Point' object has no attribute 'z'
+```
+
+---
+
+### ۱۳. پیش‌درآمدی بر Descriptor Protocol: `__get__`، `__set__`، `__delete__`
+
+این سه متد، هسته‌ی **Descriptor Protocol** هستند که خود `@property`، `@classmethod` و حتی خود متدها روی آن ساخته شده‌اند. Descriptor به شما اجازه می‌دهد منطق دسترسی به attribute را در یک کلاس جداگانه و قابل استفاده‌ی مجدد کپسوله کنید.
+
+```python
+class PositiveNumber:
     def __set_name__(self, owner, name):
+        # remembers the attribute name
         self._name = "_" + name
 
     def __get__(self, obj, objtype=None):
+        if obj is None:
+            return self
         return getattr(obj, self._name)
 
     def __set__(self, obj, value):
         if value <= 0:
-            raise ValueError("must be positive")
+            raise ValueError("Value must be positive")
         setattr(obj, self._name, value)
 
 class Product:
-    price = Positive()      # validation logic, reusable
-    weight = Positive()
+    price = PositiveNumber()
+    weight = PositiveNumber()
 
     def __init__(self, price, weight):
         self.price = price
         self.weight = weight
 
 p = Product(100, 5)
-# Product(-1, 5)   # ValueError: must be positive
+print(p.price)    # 100
+# p.price = -10   # ValueError: Value must be positive
 ```
 
-مزیت نسبت به property: منطق `Positive` یک‌بار نوشته شد و روی `price` و `weight` (و هر تعداد دیگر) اعمال شد، بی‌تکرار. Descriptorها آن‌قدر مهم‌اند که در فصل پانزدهم یک فصل کامل برایشان داریم.
+مزیت Descriptor نسبت به `@property` این است که منطق اعتبارسنجی را یک بار نوشته و روی هر تعداد attribute اعمال می‌کنید. این موضوع در پروژه‌های بزرگ بسیار ارزشمند است.
+
+---
+
+### ۱۴. خلاصه‌ی متدهای جادویی پرکاربرد
+
+| متد جادویی | کاربرد | مثال |
+|------------|--------|-------|
+| `__init__` | مقداردهی اولیه‌ی شیء | `obj = MyClass(args)` |
+| `__new__` | ساخت شیء (پیش از `__init__`) | کنترل فرآیند ساخت |
+| `__str__` | نمایش برای کاربر | `print(obj)` |
+| `__repr__` | نمایش برای برنامه‌نویس | `repr(obj)`، نمایش در REPL |
+| `__format__` | قالب‌بندی در f-string | `f"{obj:spec}"` |
+| `__eq__` | برابری بر اساس مقدار | `obj1 == obj2` |
+| `__hash__` | مقدار هش برای استفاده در set/dict | `hash(obj)` |
+| `__bool__` | تعیین صحت در شرط‌ها | `if obj:` |
+| `__add__` | جمع | `obj1 + obj2` |
+| `__radd__` | جمع معکوس | `something + obj` |
+| `__mul__` | ضرب | `obj1 * obj2` |
+| `__getitem__` | دسترسی با ایندکس | `obj[index]` |
+| `__setitem__` | مقداردهی با ایندکس | `obj[index] = value` |
+| `__delitem__` | حذف با ایندکس | `del obj[index]` |
+| `__len__` | طول | `len(obj)` |
+| `__contains__` | عضویت | `item in obj` |
+| `__iter__` | پیمایش | `for x in obj:` |
+| `__next__` | مقدار بعدی در پیمایش | استفاده درونی توسط `__iter__` |
+| `__enter__` | ورود به بلاک `with` | `with obj as x:` |
+| `__exit__` | خروج از بلاک `with` | تضمین آزادسازی منابع |
+| `__call__` | فراخوانی شیء به عنوان تابع | `obj(args)` |
+| `__getattr__` | دسترسی به attribute گم‌شده | `obj.missing` |
+| `__setattr__` | مقداردهی به هر attribute | `obj.attr = value` |
+| `__slots__` | محدود کردن attributeها برای بهینه‌سازی حافظه | تعریف در سطح کلاس |
+
+---
+
+### قاعده‌ی طلایی: به اندازه‌ی نیاز استفاده کنید
+
+متدهای جادویی قدرتمند و وسوسه‌انگیز هستند. اما **همه‌ی آنها را در همه‌ی کلاس‌ها نیاز ندارید**. فقط آن دسته از متدها را پیاده‌سازی کنید که واقعاً به یکپارچگی کلاس شما با زبان پایتون کمک می‌کنند. یک کلاس ساده که فقط `__repr__` دارد، اغلب بهتر از کلاسی است که ده متد جادویی پیاده‌سازی کرده که هیچ‌کدام واقعاً مورد استفاده قرار نمی‌گیرند.
+
+**اصل YAGNI** (You Ain't Gonna Need It) را به خاطر داشته باشید: «به آن نیاز نخواهی داشت.» با attributeها و متدهای ساده شروع کنید و فقط در صورت نیاز، متدهای جادویی را اضافه کنید.
+
+---
+
+### جمع‌بندی نهایی: پل زدن میان کلاس و زبان
+
+متدهای جادویی، پلی هستند میان کلاس‌های شما و ساختارهای زبانی پایتون. آنها به شما اجازه می‌دهند تا:
+
+- اشیاء خود را با عملگرها (`+`, `==`, `[]`, `in`) یکپارچه کنید.
+- اشیاء خود را با توابع داخلی (`len`, `print`, `iter`, `bool`) هماهنگ کنید.
+- از ساختارهای زبانی (`with`, `for`, `if`) به شیوه‌ای طبیعی استفاده کنید.
+- کنترل دقیقی بر نحوه‌ی دسترسی به داده‌ها داشته باشید.
+
+این یکپارچگی، کد شما را نه تنها خواناتر، بلکه **طبیعی‌تر** می‌کند. کاربران کلاس شما (که ممکن است خودتان باشید) می‌توانند به جای یادگیری متدهای خاص، از همان ساختارهایی استفاده کنند که با آنها آشنا هستند.
+
 
 ## خلاصه
 
