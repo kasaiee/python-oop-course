@@ -14,81 +14,134 @@
 
 ## چرا این ابزارها را یاد بگیریم؟
 
-بدون این‌ها هم می‌شود کد نوشت، اما کد ناشیانه‌تر و پرتکرارتر. با آن‌ها:
+بدون این‌ها هم می‌شود کد نوشت، اما با این‌ها می‌توان کد هایی به مراتب حرفه‌ای تر نوشت. با آن‌ها:
 
 - می‌توانید دسترسی به داده را کنترل کنید بی‌آنکه کد کاربر تغییر کند (Property)
 - اشیاء را با منطق‌های مختلف بسازید (Factory با `@classmethod`)
 - کلاس‌هایتان با حلقه‌ی `for`، عملگر `==`، عبارت `with` و... یکپارچه شوند (متدهای جادویی)
 - کدی بنویسید که با فریمورک‌های مدرن پایتون هماهنگ باشد
 
-## Property — کنترل هوشمند دسترسی
+## Property
 
-### مشکل: Getter و Setter کلاسیک
+## Property در پایتون: از داده‌های ساده تا ویژگی‌های هوشمند
 
-در جاوا رسم است که attributeها را private کنید و برایشان `getX()` و `setX()` بنویسید. یک تازه‌وارد از جاوا آمده، در پایتون هم همین می‌کند:
+### مقدمه‌ای بر مفاهیم پایه
+
+در برنامه‌نویسی شیءگرا، اشیاء دارای ویژگی‌هایی هستند که وضعیت آنها را مشخص می‌کنند. در پایتون، این ویژگی‌ها معمولاً به صورت attributeهای ساده تعریف می‌شوند. برای نمونه، کلاس `Student` را در نظر بگیرید که دارای attributeهای `name` و `score` است:
 
 ```python
-class Temperature:
-    def __init__(self, celsius):
-        self._celsius = celsius
-
-    def get_celsius(self):
-        return self._celsius
-
-    def set_celsius(self, value):
-        self._celsius = value
-
-t = Temperature(25)
-print(t.get_celsius())    # 25 — verbose and non-Pythonic
-t.set_celsius(30)
+class Student:
+    def __init__(self, name, score):
+        self.name = name
+        self.score = score
 ```
 
-این پایتونی نیست. کاربر باید `t.get_celsius()` بنویسد به‌جای `t.celsius`. پایتون راه بهتری دارد.
-
-### راه‌حل: @property
-
-`@property` به شما اجازه می‌دهد یک متد را **مثل یک attribute ساده** در دسترس بگذارید، اما پشتش منطق داشته باشید:
+کار با این attributeها بسیار ساده و مستقیم است:
 
 ```python
-class Temperature:
-    def __init__(self, celsius):
-        self._celsius = celsius
+student = Student("احمد", 85)
+print(student.score)   # 85
+student.score = 90     # تغییر مقدار
+```
+
+این شیوه‌ی کار، در بسیاری از موارد کافی و مناسب است. اما گاهی نیاز می‌شود که فراتر از یک ذخیره‌سازی ساده، منطق خاصی را هنگام دسترسی به داده‌ها اعمال کنیم.
+
+### ضرورت وجود منطق در دسترسی به داده‌ها
+
+فرض کنید در پروژه‌ای، نیاز به اعمال محدودیت برای نمره‌ی دانشجو داریم. نمره نباید کمتر از ۰ یا بیشتر از ۱۰۰ باشد. روش ابتدایی برای حل این مسئله، تعریف متدهایی برای دریافت و تنظیم مقدار است:
+
+```python
+class Student:
+    def __init__(self, name, score):
+        self._score = score   # underscore نشان‌دهنده‌ی داده‌ی داخلی است
+
+    def set_score(self, value):
+        if 0 <= value <= 100:
+            self._score = value
+        else:
+            raise ValueError("نمره باید بین ۰ و ۱۰۰ باشد")
+
+    def get_score(self):
+        return self._score
+```
+
+این رویکرد اگرچه مشکل اعتبارسنجی را حل می‌کند، اما هزینه‌ی قابل‌توجهی دارد: کاربران کلاس باید به جای دسترسی مستقیم به attribute، از متدهای `get_score` و `set_score` استفاده کنند. این تغییر، تمام کدهای قبلی که از `student.score` استفاده می‌کردند را از کار می‌اندازد و نیاز به بازنویسی گسترده دارد.
+
+### مفهوم Property در پایتون
+
+پایتون با ارائه‌ی مکانیزم `property`، راهی ظریف برای حل این مسئله ارائه می‌دهد. با استفاده از `property`، می‌توان یک attribute ساده را به گونه‌ای تبدیل کرد که دسترسی به آن، در پشت صحنه، یک متد را فراخوانی کند. در عین حال، نحوه‌ی دسترسی برای کاربر، کاملاً مشابه حالت قبل باقی می‌ماند:
+
+```python
+class Student:
+    def __init__(self, name, score):
+        self._score = score
 
     @property
-    def celsius(self):               # read like an attribute
-        return self._celsius
+    def score(self):
+        return self._score
 
-    @celsius.setter
-    def celsius(self, value):        # assigned like an attribute
-        if value < -273.15:
-            raise ValueError("temperature below absolute zero is impossible")
-        self._celsius = value
-
-t = Temperature(25)
-print(t.celsius)      # 25 — no parentheses! like an attribute
-t.celsius = 30        # the setter is called automatically
-# t.celsius = -300    # ValueError — validation works
+    @score.setter
+    def score(self, value):
+        if 0 <= value <= 100:
+            self._score = value
+        else:
+            raise ValueError("نمره باید بین ۰ و ۱۰۰ باشد")
 ```
 
-زیبایی کار: کاربر با `t.celsius` کار می‌کند انگار یک attribute ساده است، اما شما در پشت‌صحنه کنترل کامل دارید. این همان **انتزاع** فصل قبل است، به شکل عملی.
-
-### مزیت بزرگ: تغییر بدون شکستن کد کاربر
-
-فرض کنید ابتدا `celsius` یک attribute ساده بود:
+حال کاربر می‌تواند به همان شیوه‌ی قبلی با attribute کار کند:
 
 ```python
-class Temperature:
-    def __init__(self, celsius):
-        self.celsius = celsius        # simple attribute
-
-# the user's code everywhere:  t.celsius = 30
+student = Student("احمد", 85)
+print(student.score)   # 85 ← متد getter فراخوانی می‌شود
+student.score = 90     # ← متد setter فراخوانی می‌شود
+# student.score = 150  # ValueError!
 ```
 
-بعداً می‌فهمید باید اعتبارسنجی اضافه کنید. در جاوا باید همه‌جا `t.celsius` را به `t.setCelsius()` تغییر می‌دادید. در پایتون فقط `celsius` را به property تبدیل می‌کنید و **هیچ خطی از کد کاربر تغییر نمی‌کند**. این چرایی اصلی ترجیح `@property` بر getter/setter در پایتون است: تا وقتی نیازش نیست، attribute ساده بگذارید؛ هر وقت لازم شد، بدون شکستن چیزی، به property ارتقا دهید.
+**نکته‌ی کلیدی**: کد کاربر هیچ تغییری نکرده است، اما اکنون اعتبارسنجی به صورت خودکار اعمال می‌شود.
 
-### Property فقط‌خواندنی (Read-Only)
+### مفهوم فلسفی Property: تفکیک رابط از پیاده‌سازی
 
-اگر فقط getter تعریف کنید و setter نگذارید، attribute فقط‌خواندنی می‌شود — کاربردی برای مقدارهای محاسبه‌شونده:
+`property` در پایتون، فراتر از یک ابزار ساده برای اعتبارسنجی است. این مکانیزم، تجسمی از اصل مهم انتزاع (Abstraction) در برنامه‌نویسی شیءگراست:
+
+- **رابط (Interface)**: کاربر با `student.score` کار می‌کند؛ یک attribute ساده و قابل‌درک.
+- **پیاده‌سازی (Implementation)**: پشت این رابط، هر منطقی می‌تواند قرار گیرد؛ از اعتبارسنجی ساده تا دریافت داده از دیتابیس.
+
+این تفکیک، امکان تغییر پیاده‌سازی را بدون تأثیر بر کد کاربر فراهم می‌کند. در واقع، `property` به توسعه‌دهنده این قدرت را می‌دهد که هر زمان نیاز به منطق جدیدی پیدا کرد، attribute ساده را به `property` تبدیل کند، بدون آنکه کاربران کلاس متوجه تغییری شوند.
+
+### ویژگی‌های محاسبه‌شونده (Computed Attributes)
+
+یکی از کاربردهای اساسی `property`، ایجاد ویژگی‌هایی است که مقدارشان از داده‌های دیگر شیء محاسبه می‌شود. چنین ویژگی‌هایی، در حافظه ذخیره نمی‌شوند، بلکه در لحظه‌ی دسترسی، بر اساس وضعیت فعلی شیء تولید می‌شوند:
+
+```python
+class Rectangle:
+    def __init__(self, width, height):
+        self.width = width
+        self.height = height
+
+    @property
+    def area(self):
+        """مساحت مستطیل: یک ویژگی محاسبه‌شونده"""
+        return self.width * self.height
+```
+
+در این مثال، `area` یک داده‌ی ذخیره‌شده نیست، بلکه یک ویژگی است که از عرض و ارتفاع به‌دست می‌آید. کاربر با `rectangle.area` کار می‌کند، گویی که یک attribute ساده است:
+
+```python
+rect = Rectangle(4, 5)
+print(rect.area)   # 20
+rect.width = 10
+print(rect.area)   # 50 (به‌روزرسانی خودکار)
+```
+
+این رویکرد مزایای قابل‌توجهی دارد:
+
+- **سازگاری همیشگی**: مقدار `area` هیچگاه با داده‌های `width` و `height` ناهماهنگ نمی‌شود، زیرا هر بار از نو محاسبه می‌شود.
+- **صرفه‌جویی در حافظه**: داده‌های اضافی در حافظه نگهداری نمی‌شوند.
+- **شفافیت کد**: کاربر با یک attribute ساده کار می‌کند و نیازی به دانستن پیچیدگی محاسبه ندارد.
+
+### ویژگی‌های فقط‌خواندنی (Read-Only Properties)
+
+اگر برای یک `property`، متد `setter` تعریف نشود، آن ویژگی به صورت فقط‌خواندنی در می‌آید. این قابلیت برای مواقعی مناسب است که تغییر مستقیم یک ویژگی، منطقی نباشد:
 
 ```python
 class Circle:
@@ -96,17 +149,64 @@ class Circle:
         self.radius = radius
 
     @property
-    def area(self):                  # read-only, computed
+    def area(self):
         return 3.14159 * self.radius ** 2
 
-c = Circle(5)
-print(c.area)      # 78.53975 — always up to date
-c.radius = 10
-print(c.area)      # 314.159 — recomputed automatically
-# c.area = 100     # AttributeError: can't set attribute
+    @property
+    def diameter(self):
+        return 2 * self.radius
+
+circle = Circle(5)
+print(circle.area)       # 78.53975
+print(circle.diameter)   # 10
+# circle.area = 100      # AttributeError: can't set attribute
 ```
 
-`area` داده‌ی ذخیره‌شده نیست؛ هر بار از `radius` محاسبه می‌شود. پس همیشه سازگار است و نمی‌شود به‌اشتباه مقدار نامعتبر برایش گذاشت.
+در اینجا، `area` و `diameter` از روی شعاع محاسبه می‌شوند و کاربر نمی‌تواند آنها را مستقیماً تغییر دهد، که این با منطق ریاضی سازگار است.
+
+### کش کردن محاسبات سنگین با cached_property
+
+در برخی موارد، محاسبه‌ی یک ویژگی سنگین است و نمی‌خواهیم هر بار که به آن دسترسی پیدا می‌شود، دوباره محاسبه شود. ماژول `functools` ابزاری به نام `cached_property` ارائه می‌دهد که اولین بار مقدار را محاسبه و ذخیره می‌کند، و دفعات بعد، همان مقدار ذخیره‌شده را باز می‌گرداند:
+
+```python
+from functools import cached_property
+
+class Dataset:
+    def __init__(self, file_path):
+        self.file_path = file_path
+
+    @cached_property
+    def data(self):
+        """خواندن داده‌ها از فایل: فقط یک بار انجام می‌شود"""
+        print("در حال خواندن فایل حجیم...")
+        # عملیات سنگین خواندن فایل
+        return [1, 2, 3, 4, 5]
+
+dataset = Dataset("data.csv")
+print(dataset.data)   # چاپ: "در حال خواندن فایل حجیم..." و سپس [1, 2, 3, 4, 5]
+print(dataset.data)   # فقط [1, 2, 3, 4, 5] (بدون خواندن مجدد فایل)
+```
+
+تفاوت اساسی با `@property` در این است که `@property` هر بار محاسبه را تکرار می‌کند، در حالی که `@cached_property` نتیجه را در حافظه نگه می‌دارد. این ابزار برای داده‌هایی که تغییر نمی‌کنند و دسترسی به آنها هزینه‌بر است، ایده‌آل می‌باشد. البته باید در نظر داشت که اگر داده‌ی زیربنایی تغییر کند، کش کهنه می‌شود.
+
+### استراتژی انتخاب میان attribute و property
+
+برای تصمیم‌گیری بین استفاده از attribute ساده و property، می‌توان از قاعده‌ی زیر پیروی کرد:
+
+1.  **با attribute ساده شروع کنید**: تا زمانی که نیازی به منطق اضافی ندارید، از attributeهای ساده استفاده کنید. این کار کد را ساده و خوانا نگه می‌دارد.
+2.  **در صورت نیاز، به property مهاجرت کنید**: هر گاه به اعتبارسنجی، محاسبه، تبدیل واحد، یا هر منطق دیگری نیاز پیدا کردید، attribute را به `property` تبدیل کنید. این تغییر، کد کاربر را نمی‌شکند.
+
+این رویکرد، که به «برنامه‌نویسی تکاملی» معروف است، به شما اجازه می‌دهد که سیستم را به تدریج و با اطمینان از عدم شکستن کدهای موجود، پیچیده‌تر کنید.
+
+### جمع‌بندی: Property به مثابه یک لایه‌ی انتزاعی
+
+`property` در پایتون، یک لایه‌ی انتزاعی (Abstraction Layer) بین نحوه‌ی ذخیره‌سازی داده و نحوه‌ی ارائه‌ی آن به کاربر ایجاد می‌کند. این لایه به توسعه‌دهنده اجازه می‌دهد:
+
+- نحوه‌ی ذخیره‌سازی داده را بدون تغییر کد کاربر تغییر دهد.
+- اعتبارسنجی و تبدیل داده‌ها را پیش از ذخیره یا پس از خواندن اعمال کند.
+- ویژگی‌های محاسبه‌شونده را به صورت طبیعی و ساده در اختیار کاربر قرار دهد.
+
+`property` ابزاری است که به کد شما انعطاف‌پذیری می‌بخشد و به شما امکان می‌دهد تا «چیستی» (رابط) را از «چگونگی» (پیاده‌سازی) جدا کنید؛ اصلی که در قلب برنامه‌نویسی شیءگرا قرار دارد.
 
 ### Lazy Loading و cached_property
 
