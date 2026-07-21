@@ -26,27 +26,23 @@
 آیا این خوب است یا بد؟ **هر دو.** وراثت چندگانه امکاناتی می‌دهد که در جاوا سخت‌اند، اما اگر بی‌محابا استفاده شود، فاجعه می‌سازد. کلید، **انضباط** است — که در بخش Mixinها می‌بینیم.
 
 ```python
-class Serializable:
-    def to_json(self):
-        import json
-        return json.dumps(self.__dict__)
+class Camera:
+    def take_photo(self):
+        return "photo taken"
 
-class Comparable:
-    def __lt__(self, other):
-        return self.value < other.value
+class Phone:
+    def make_call(self):
+        return "calling..."
 
-class Number(Serializable, Comparable):    # inherited from two parents
-    def __init__(self, value):
-        self.value = value
+class Smartphone(Camera, Phone):      # inherits from both
+    pass
 
-n = Number(5)
-print(n.to_json())          # {"value": 5}   ← from Serializable
-print(Number(3) < Number(7))  # True         ← from Comparable
+s = Smartphone()
+print(s.take_photo())   # photo taken
+print(s.make_call())    # calling...
 ```
 
 ### مسئله‌ی الماس (Diamond Problem)
-
-یک خاطره پیش از تعریف رسمی: یک‌بار در بازبینی کد یک تیم، باگی دیدم که سه روز دنبالش گشته بودند — متد `save` گاهی دو بار اجرا می‌شد و رکورد تکراری می‌ساخت. کد پر از وراثت چندگانه بود و هر کلاس در `save` مستقیماً `ParentClass.save(self)` صدا می‌زد، نه `super().save()`. نتیجه: کلاس مشترک بالای سلسله‌مراتب، از دو مسیر دو بار اجرا می‌شد. این دقیقاً همان چیزی است که الان می‌خواهیم بشکافیم — و وقتی فصل تمام شود، آن باگ سه‌روزه برای شما یک نگاه آب می‌خورد.
 
 مسئله‌ی الماس وقتی رخ می‌دهد که یک کلاس از دو والد ارث ببرد که **هر دو از یک جد مشترک** آمده‌اند. شکلش مثل الماس است:
 
@@ -110,8 +106,6 @@ print(D.__mro__)
 **قاعده‌ی عملی:** در وراثت چندگانه، همیشه از `super()` استفاده کنید، نه از نام مستقیم والد (مثل `A.__init__(self)`). استفاده‌ی مستقیم، زنجیره‌ی MRO را می‌شکند و می‌تواند باعث اجرای چندباره یا حذف یک کلاس شود.
 
 ### MRO از صفر: توضیح گام‌به‌گام
-
-> اگر از [فصل اول](01-philosophy-history-oop.md) به اینجا ارجاع داده شده‌اید: خوش‌آمدید. حالا که ارث‌بری را کامل یاد گرفته‌اید، MRO خیلی روشن‌تر خواهد بود. از صفر شروع می‌کنیم.
 
 بیایید ساده‌ترین حالت را ببینیم. وقتی یک کلاس **فقط یک والد** دارد، ماجرا بدیهی است: پایتون اول در خود کلاس دنبال متد می‌گردد، اگر نیافت به والد می‌رود، بعد به والد والد، و در نهایت به `object`.
 
