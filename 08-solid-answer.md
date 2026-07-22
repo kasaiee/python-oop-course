@@ -4,7 +4,7 @@
 
 ---
 
-## بخش الف: Single Responsibility و Open/Closed
+## تمرین ۱ - Single Responsibility و Open/Closed
 
 **۱.** SRP می‌گوید **هر کلاس باید فقط یک دلیل برای تغییر داشته باشد** (یک مسئولیت منسجم). `send_email` نقض SRP است چون به هویت کاربر ربطی ندارد. دو دلیل مستقل تغییر این کلاس:
 - تغییر نحوه‌ی **ذخیره‌سازی** (مثلاً عوض‌شدن دیتابیس) → متد `save`.
@@ -46,7 +46,7 @@ processor.process(CryptoPayment(), 2000)   # the old code stayed untouched
 
 ---
 
-## بخش ب: Liskov Substitution و Interface Segregation
+## تمرین ۲ - Liskov Substitution و Interface Segregation
 
 **۴.** LSP می‌گوید **هرجا از والد استفاده می‌شود باید بتوان زیرکلاس را جایگزین کرد، بی‌آنکه رفتار درست بشکند**. `ReadOnlyStorage` این را نقض می‌کند چون متد `save` را که در قرارداد `FileStorage` هست، با `NotImplementedError` خنثی کرده. هر کدی که یک `FileStorage` می‌گیرد و انتظار دارد `save` کار کند، با یک `ReadOnlyStorage` به‌شکل غیرمنتظره **می‌شکند** — پس `ReadOnlyStorage` جانشین سالم والد نیست.
 
@@ -86,7 +86,7 @@ class RobotWorker(Workable):        # only what it actually needs
 
 ---
 
-## بخش ج: Dependency Inversion
+## تمرین ۳ - Dependency Inversion
 
 **۸.** DIP می‌گوید **ماژول‌های سطح‌بالا و سطح‌پایین هر دو باید به انتزاع وابسته باشند، نه یکی به دیگری**. مشکل کد نمونه: `UserService` مستقیماً `MySQLDatabase()` را داخل خودش می‌سازد و به آن **میخکوب** شده. اگر بخواهید به PostgreSQL کوچ کنید، یا در تست از یک دیتابیس حافظه‌ای استفاده کنید، مجبورید خود `UserService` را دستکاری کنید — یعنی یک ماژول سطح‌بالا به یک جزئیات سطح‌پایین گره خورده.
 
@@ -122,7 +122,7 @@ test_service = UserService(InMemoryDatabase()) # in tests
 
 ---
 
-## بخش د: تشخیص و اصول مکمل
+## تمرین ۴ - تشخیص و اصول مکمل
 
 **۱۱.**
 - الف) **SRP** — یک کلاس با سه مسئولیت نامرتبط (سبد خرید، لاگ، گزارش HTML).
@@ -139,7 +139,7 @@ test_service = UserService(InMemoryDatabase()) # in tests
 
 ---
 
-## بخش ه: پرسش تحلیلی
+## تمرین ۵ - پرسش تحلیلی
 
 **۱۳.** این جمله **نادرست** است و SOLID را از راهنما به یک اجبار کورکورانه تبدیل می‌کند. رعایت افراطی خطر دارد:
 - تقسیم همه‌چیز به کوچک‌ترین کلاس‌ها → **انفجار کلاس‌های ریز کم‌محتوا** که دنبال‌کردنشان سخت است.

@@ -4,7 +4,7 @@
 
 ---
 
-## بخش الف: Single Responsibility و Open/Closed
+## تمرین ۱ - Single Responsibility و Open/Closed
 
 **۱.** اصل Single Responsibility (SRP) چیست؟ در کلاس زیر چرا وجود متد `send_email` نقض SRP است؟ دو «دلیل مستقل تغییر» را که این کلاس دارد، نام ببرید.
 
@@ -34,7 +34,7 @@ class PaymentProcessor:
 
 ---
 
-## بخش ب: Liskov Substitution و Interface Segregation
+## تمرین ۲ - Liskov Substitution و Interface Segregation
 
 **۴.** اصل Liskov Substitution (LSP) چیست؟ در کد زیر، چرا `ReadOnlyStorage` این اصل را نقض می‌کند؟
 
@@ -68,7 +68,7 @@ class RobotWorker(Worker):
 
 ---
 
-## بخش ج: Dependency Inversion
+## تمرین ۳ - Dependency Inversion
 
 **۸.** اصل Dependency Inversion (DIP) چیست؟ در کد زیر، وابستگی `UserService` به `MySQLDatabase` چه مشکلی ایجاد می‌کند؟
 
@@ -86,7 +86,7 @@ class UserService:
 
 ---
 
-## بخش د: تشخیص و اصول مکمل
+## تمرین ۴ - تشخیص و اصول مکمل
 
 **۱۱. (تشخیص)** برای هر توضیح زیر بگویید کدام اصل SOLID نقض شده است:
 - الف) کلاسی که هم منطق سبد خرید را دارد و هم فایل لاگ را می‌نویسد و هم گزارش HTML می‌سازد.
@@ -98,7 +98,7 @@ class UserService:
 
 ---
 
-## بخش ه: پرسش تحلیلی
+## تمرین ۵ - پرسش تحلیلی
 
 **۱۳.** این جمله را نقد کنید: «هرچه اصول SOLID را بیشتر و کامل‌تر رعایت کنیم بهتر است؛ پس بیایید همه‌چیز را انتزاعی، تزریقی و به کوچک‌ترین کلاس‌های ممکن تقسیم کنیم.»
 
